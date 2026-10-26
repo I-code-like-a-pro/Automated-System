@@ -4,7 +4,7 @@
 
 ## One sentence
 
-SkillBridge turns a graduate's coursework into **proven, employer-checkable skills**: practise real workplace tasks, see exactly how ready you are for a real job ad, and carry tamper-proof evidence that anyone can verify in seconds, even offline.
+SkillBridge is a **virtual workplace for any job** (clock in, chat with an AI manager and team, make decisions, hand in work for review, earn a signed certificate) plus a Coursera-style platform for **any subject** (AI-built courses with real examples from the web, quizzes, a final exam and a verifiable certificate) that also turns a graduate's coursework into **proven, employer-checkable skills**: practise real workplace tasks, see exactly how ready you are for a real job ad, and carry tamper-proof evidence that anyone can verify in seconds, even offline.
 
 ## The problem (say it in 20 seconds)
 
@@ -25,7 +25,7 @@ Graduates are asked for experience they cannot get without a job. What they do h
 1. **Evidence, not certificates.** Most certificates prove completion. SkillBridge issues *graded, signed* records: hidden tests for code, a rubric for writing, decision quality for scenarios.
 2. **Verifiable without trusting us in the moment.** Public-key signatures mean an employer's own browser can check a portfolio offline. Edit one character and verification fails (try it live).
 3. **Job-first, not course-first.** The job-match engine starts from a real ad and works backwards to what the student needs to prove. The ad never leaves the device.
-4. **Built for poor connectivity.** About 100 KB of app code (33 KB compressed), offline-first, answers queue and grade on reconnect, sample tests run locally, ETag revalidation keeps updates tiny.
+4. **Built for poor connectivity.** About 210 KB of app code (63 KB compressed), offline-first, answers queue and grade on reconnect, sample tests run locally, ETag revalidation keeps updates tiny.
 5. **Privacy by design.** Personal data lives in the student's own browser. The server keeps only signed evidence and opt-in portfolios, tied to a hashed random key. No emails, no accounts, no passwords.
 6. **Honest about its limits.** Every verification page says what it proves (graded and unaltered) and what it does not (who did the work). Readiness is guidance, not a hiring prediction.
 

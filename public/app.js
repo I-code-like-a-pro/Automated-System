@@ -5,7 +5,7 @@
    All user-provided text is inserted with textContent (never innerHTML), and the server's CSP forbids inline scripts. */
 (() => {
 'use strict';
-const Sk = window.Skills, db = window.LocalDB.open(), Share = window.Share, Verifier = window.Verifier, JobMatch = window.JobMatch;
+const Sk = window.Skills, db = window.LocalDB.open(), Share = window.Share, Verifier = window.Verifier, JobMatch = window.JobMatch, Learn = window.Learn, Sim = window.Sim;
 
 /* ---------------------------------------------------------------- small helpers */
 function h(tag, props, ...kids) {
@@ -75,6 +75,7 @@ async function syncFromServer() {
     const mine = await api('GET', '/api/mine');
     let added = 0; mine.evidence.forEach(e => { if (db.evidence.put(e) !== 'kept') added++; });
     state.portfolio = mine.portfolio; mergeGenerated(mine.tasks);
+    (mine.certificates || []).forEach(c => { db.certs.put(c); const cur = db.learn.progress(c.courseId); if (!cur.certId) db.learn.save(c.courseId, { ...cur, certId: c.id }); });
     if (added) toast('Restored ' + plural(added, 'piece') + ' of evidence from the server');
   } catch (e) { /* offline or no records yet */ }
 }
@@ -89,7 +90,12 @@ async function restoreFromFile(file) {
       const res = await api('POST', '/api/verify', { records: records.slice(0, 60) }), ok = new Set(res.results.filter(r => r.valid).map(r => r.id));
       records = records.filter(r => ok.has(r.id));
     }
-    const n = db.restore({ ownerKey: b.ownerKey, profile: b.profile, evidence: records });
+    let certificates = b.certificates || [];
+    if (certificates.length) {                                           // certificates are signed too: keep only the genuine ones
+      const res = await api('POST', '/api/verify', { records: certificates.slice(0, 20) }), ok = new Set(res.results.filter(r => r.valid).map(r => r.id));
+      certificates = certificates.filter(c => ok.has(c.id));
+    }
+    const n = db.restore({ ownerKey: b.ownerKey, profile: b.profile, evidence: records, learn: b.learn, certificates });
     await syncFromServer(); toast('Restored ' + plural(n, 'piece') + ' of evidence'); return true;
   } catch (e) { toast(isNetworkError(e) ? 'Restoring checks signatures online. Connect and try again.' : e.message); return false; }
 }
@@ -111,16 +117,47 @@ async function flushQueue() {
 }
 
 /* ---------------------------------------------------------------- chrome */
+/* light / dark: follows the system until the person picks one, then remembers it */
+const THEME_KEY = 'sb:theme';
+(function applyTheme() { try { const t = localStorage.getItem(THEME_KEY); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (e) { /* storage blocked: follow the system */ } })();
+function toggleTheme() {
+  const root = document.documentElement, dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark'; try { localStorage.setItem(THEME_KEY, root.dataset.theme); } catch (e) { /* ignore */ }
+}
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function icon(paths, size = 24, fill) {
+  const s = document.createElementNS(SVG_NS, 'svg'); s.setAttribute('viewBox', '0 0 24 24'); s.setAttribute('width', size); s.setAttribute('height', size); s.setAttribute('fill', 'none'); s.setAttribute('stroke', 'currentColor');
+  s.setAttribute('stroke-width', '2'); s.setAttribute('stroke-linecap', 'round'); s.setAttribute('stroke-linejoin', 'round'); s.setAttribute('aria-hidden', 'true');
+  paths.forEach(d => { const el = document.createElementNS(SVG_NS, d.startsWith('c:') ? 'circle' : 'path'); if (d.startsWith('c:')) { const [cx, cy, r] = d.slice(2).split(','); el.setAttribute('cx', cx); el.setAttribute('cy', cy); el.setAttribute('r', r); } else el.setAttribute('d', d); s.append(el); });
+  if (fill) { const half = document.createElementNS(SVG_NS, 'path'); half.setAttribute('d', fill); half.setAttribute('fill', 'currentColor'); s.append(half); }
+  return s;
+}
+const ICONS = { menu: () => icon(['M4 7h16M4 12h16M4 17h16']), x: () => icon(['M6 6l12 12M18 6L6 18']), theme: () => icon(['c:12,12,8', 'M12 4v16'], 22, 'M12 4a8 8 0 010 16z') };
+const NAV_ITEMS = [['/#/', 'Simulations', 'home', 'Spend a workday at a company'], ['/#/learn', 'Courses', 'learn', 'Lessons and certificates on any subject'], ['/#/tasks', 'Practice tasks', 'tasks', 'Workplace exercises with instant marking'],
+  ['/#/jobs', 'Job match', 'jobs', 'Check a job ad against your skills'], ['/#/skills', 'Skill map', 'skills', 'Your skills, proven and suggested'], ['/#/portfolio', 'Portfolio', 'portfolio', 'Share your signed evidence'], ['/verify', 'Verify a credential', 'verify', 'For employers and universities'], ['/#/profile', 'Profile and backup', 'profile', 'Your data stays on this device']];
+function closeDrawer() { const d = document.getElementById('drawer'); if (d) d.remove(); document.removeEventListener('keydown', drawerKey); }
+function drawerKey(e) { if (e.key === 'Escape') closeDrawer(); }
+function openDrawer(current) {
+  closeDrawer();
+  const close = h('button', { class: 'icon', type: 'button', 'aria-label': 'Close menu', onclick: closeDrawer }, ICONS.x());
+  const d = h('div', { class: 'drawer sim', id: 'drawer' },
+    h('nav', { class: 'dpanel', 'aria-label': 'Main menu' }, h('div', { class: 'row' }, h('span', { class: 'logo', style: { padding: '0' } }, 'skillbridge'), h('span', { class: 'sp' }), close),
+      h('p', { class: 'small muted', style: { margin: '6px 0 10px' } }, 'Learn by doing, then prove it.'),
+      NAV_ITEMS.map(([href, label, key, sub]) => h('a', { class: 'item' + (key === current ? ' on' : ''), href, onclick: closeDrawer, 'aria-current': key === current ? 'page' : null }, h('span', null, h('b', null, label), h('small', { class: 'muted' }, sub)))),
+      h('button', { class: 'item', type: 'button', onclick: toggleTheme }, h('span', null, h('b', null, 'Light or dark'), h('small', { class: 'muted' }, 'Switch the colour theme')))),
+    h('div', { class: 'dscrim', onclick: closeDrawer }));
+  document.body.append(d); document.addEventListener('keydown', drawerKey); close.focus();
+}
 function topbar(current) {
-  const nav = [['/#/', 'Dashboard', 'home'], ['/#/jobs', 'Job match', 'jobs'], ['/#/tasks', 'Practice', 'tasks'], ['/#/portfolio', 'Portfolio', 'portfolio'], ['/verify', 'Verify', 'verify']], p = profile();
-  document.getElementById('topbar').replaceChildren(
-    h('a', { class: 'brand', href: '/#/' }, h('img', { src: '/icon.svg', alt: '', width: 26, height: 26 }), 'SkillBridge'),
-    h('nav', { class: 'main', 'aria-label': 'Main' }, nav.map(([href, label, key]) => h('a', { href, 'aria-current': key === current ? 'page' : null }, label))),
+  const bar = document.getElementById('topbar'), foot = document.getElementById('foot');
+  if (current === 'work') { bar.replaceChildren(); foot.replaceChildren(); return; }                      // the workday screen has its own bar
+  bar.replaceChildren(...kids(
+    h('button', { class: 'icon', type: 'button', 'aria-label': 'Open menu', onclick: () => openDrawer(current) }, ICONS.menu()),
+    h('a', { class: 'logo', href: '/#/', 'aria-label': 'SkillBridge home' }, 'skillbridge'),
     h('span', { class: 'spacer' }),
-    h('span', { class: 'badge ' + (navigator.onLine ? 'on' : 'off'), title: navigator.onLine ? 'Connected' : 'Your work is saved on this device and syncs later' }, navigator.onLine ? 'Online' : 'Offline: saving locally'),
-    h('span', { class: 'badge', title: 'Written tasks are graded by AI when the server has a key, otherwise by a checklist' }, state.health.ai ? 'AI feedback on' : 'Checklist feedback'),
-    p ? h('a', { href: '/#/profile', class: 'badge' }, p.name) : h('a', { href: '/#/', class: 'badge' }, 'Get started'));
-  document.getElementById('foot').replaceChildren(h('p', null, 'SkillBridge verifies that evidence was graded and issued by this system and has not been altered. It does not prove who did the work or that it was done unaided. Your profile and coursework stay in this browser. Only your signed evidence and, if you choose, a public portfolio are kept on the server.'));
+    navigator.onLine ? null : h('span', { class: 'badge off', title: 'Your work is saved on this device and syncs later' }, 'Offline'),
+    h('button', { class: 'icon', type: 'button', 'aria-label': 'Switch light or dark', onclick: toggleTheme }, ICONS.theme())));
+  foot.replaceChildren(h('p', null, 'SkillBridge certificates and evidence are signed, so anyone can check they are genuine and unaltered. They do not prove who did the work or that it was done unaided, and they are not accredited qualifications. Your profile and progress stay in this browser; only signed evidence, simulation and certificate records, and an optional public portfolio are kept on the server.'));
 }
 function mount(current, ...nodes) { topbar(current); $app().replaceChildren(...kids(nodes)); $app().focus({ preventScroll: true }); window.scrollTo(0, 0); }
 const loading = msg => h('p', { class: 'loading' }, msg || 'Loading...');
@@ -184,7 +221,7 @@ function pageOnboard() {
   const backupInput = h('input', { type: 'file', accept: '.json,application/json', 'aria-label': 'Choose a backup file' });
   const restoreCard = h('div', { class: 'card' }, h('h3', null, 'Already used SkillBridge?'), h('p', { class: 'small dim' }, 'Restore your profile and evidence from a backup file you downloaded earlier.'),
     h('div', { class: 'row' }, backupInput, h('button', { class: 'alt', type: 'button', onclick: async () => { if (await restoreFromFile(backupInput.files[0])) route(); } }, 'Restore from backup')));
-  mount('home', storageWarning(),
+  mount('skills', storageWarning(),
     h('section', { class: 'hero' }, h('h1', null, 'Turn what you studied into proof you can do the job.'),
       h('div', { class: 'row', style: { marginTop: '14px' } }, h('button', { onclick: startDemo }, 'Try the 60-second demo'), h('a', { class: 'btn alt', href: '/verify' }, 'I am an employer: verify a credential')),
       h('p', null, 'Employers want experience and evidence. SkillBridge shows which skills your degree gives you, lets you practise real workplace tasks, and issues tamper-proof evidence an employer can check in seconds.')),
@@ -200,17 +237,17 @@ function pageOnboard() {
     form, restoreCard);
 }
 function pageWelcome() {
-  mount('home', h('div', { class: 'card' }, h('h1', null, 'Welcome, ' + profile().name + '!'),
+  mount('skills', h('div', { class: 'card' }, h('h1', null, 'Welcome, ' + profile().name + '!'),
     h('p', null, 'Your profile lives in this browser, so you can start practising straight away.'),
     h('div', { class: 'notice warn' }, h('b', null, 'Back it up. '), 'If you clear your browser data or switch device, your profile is gone unless you saved a backup file. You can do it any time from Profile. The backup also carries your private key, which keeps your shared evidence linked to you.'),
-    h('div', { class: 'row' }, h('a', { class: 'btn', href: '/#/' }, 'Go to my dashboard'), h('a', { class: 'btn alt', href: '/#/profile' }, 'Open Profile'))));
+    h('div', { class: 'row' }, h('a', { class: 'btn', href: '/#/skills' }, 'Go to my skill map'), h('a', { class: 'btn alt', href: '/#/profile' }, 'Open Profile'))));
 }
 
 function pageDashboard() {
   const p = profile(), { r, list, ev, levels, claimed, recommended } = computed(), best = db.evidence.bestByTask();
   const atTarget = r.skills.filter(s => (levels[s.id] || { level: 0 }).level >= r.targetLevel).length, q = db.queue.list().length, done = Object.keys(best).length;
   const lastBackup = db.meta.get().lastBackup, backupDue = ev.length && (!lastBackup || Date.now() - Date.parse(lastBackup) > 14 * 864e5);
-  mount('home', storageWarning(),
+  mount('skills', storageWarning(),
     demoBanner(), h('h1', null, 'Hi ' + p.name.split(' ')[0] + ', here is your path to ' + r.title),
     q ? h('div', { class: 'notice warn' }, plural(q, 'saved answer') + ' will be submitted automatically when you are back online.') : null,
     backupDue ? h('div', { class: 'notice info' }, 'Your evidence is stored in this browser. ', h('a', { href: '/#/profile' }, 'Download a backup'), ' so you never lose it.') : null,
@@ -241,8 +278,8 @@ function generatorPanel(r) {
         try { job = await api('GET', '/api/generate/' + started.job); misses = 0; }
         catch (e) { if (!isNetworkError(e) || ++misses > 8) throw e; status.replaceChildren(h('p', { class: 'dim' }, 'Connection is slow, still trying...')); continue; }
         if (job.status === 'done') { mergeGenerated([job.task]); location.href = '/#/task/' + job.task.id; return; }
-        if (job.status === 'error') throw new Error(job.error);
-        if (Date.now() - t0 > 180000) throw new Error('This is taking too long. Please try again.');
+        if (job.status === 'error') throw Object.assign(new Error(job.error), { status: 502 });   // a status marks it as a real answer, not a lost connection
+        if (Date.now() - t0 > 180000) throw Object.assign(new Error('This is taking too long. Please try again.'), { status: 504 });
         status.replaceChildren(h('p', { class: 'dim' }, 'Your colleague is writing a task... ' + Math.round((Date.now() - t0) / 1000) + 's (usually under a minute).'));
       }
     } catch (e) { status.replaceChildren(h('div', { class: 'notice bad' }, isNetworkError(e) ? 'Could not reach the server. Check your connection and try again.' : e.message)); btn.disabled = false; }
@@ -314,7 +351,7 @@ function pageTask(id) {
   submitBtn.addEventListener('click', async () => {
     const answer = getAnswer();
     if (!answer) { toast(task.type === 'code' || task.type === 'written' ? 'Write your answer first.' : 'Choose an answer for every question.'); return; }
-    if (!profile()) { toast('Create your profile first. It takes a minute and stays on this device.'); location.href = '/#/'; return; }
+    if (!profile()) { toast('Create your profile first. It takes a minute and stays on this device.'); location.href = '/#/skills'; return; }
     const payload = { taskId: id, answer, studentName: profile().name, timeSpentSec: Math.round((Date.now() - startedAt) / 1000) };
     submitBtn.disabled = true;
     try {
@@ -338,7 +375,7 @@ function pageTask(id) {
       res.evidence ? h('div', { class: 'notice good' }, h('b', null, 'Signed evidence issued and saved to your portfolio. '), h('a', { href: '/verify/' + res.evidence.id }, 'View the verification page')) : null,
       res.note ? h('div', { class: 'notice info' }, res.note) : null,
       !res.passed ? h('div', { class: 'notice info' }, 'You need 60% to earn evidence. Read the notes above, adjust and try again.') : null,
-      h('div', { class: 'row' }, h('a', { class: 'btn', href: '/#/tasks' }, 'Next task'), h('a', { class: 'btn alt', href: '/#/' }, 'See my skill map'), h('button', { class: 'alt', type: 'button', onclick: () => { resultBox.replaceChildren(); submitBtn.disabled = false; window.scrollTo(0, 0); } }, 'Try again'))));
+      h('div', { class: 'row' }, h('a', { class: 'btn', href: '/#/tasks' }, 'Next task'), h('a', { class: 'btn alt', href: '/#/skills' }, 'See my skill map'), h('button', { class: 'alt', type: 'button', onclick: () => { resultBox.replaceChildren(); submitBtn.disabled = false; window.scrollTo(0, 0); } }, 'Try again'))));
     submitBtn.disabled = false; resultBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   mount('tasks', h('p', null, h('a', { href: '/#/tasks' }, '← All tasks')), h('h1', null, task.title),
@@ -470,7 +507,7 @@ async function startDemo() {
     const res = await api('POST', '/api/demo');
     db.profile.set({ name: res.studentName, major: 'Computer Science', year: '2026', role: 'software-engineer', coursework: 'Data Structures and Algorithms\nSoftware Engineering group project\nGit and GitHub workshop\nUniversity hackathon team\nWeb Security elective' });
     db.evidence.replaceAll(res.evidence); db.cache.set('demo', { cohort: res.cohort, at: new Date().toISOString() });
-    toast('Demo loaded: a student with real, signed evidence'); location.href = '/#/'; route();
+    toast('Demo loaded: a student with real, signed evidence'); location.href = '/#/skills'; route();
   } catch (e) { toast(isNetworkError(e) ? 'The demo needs a connection to the server.' : e.message); }
 }
 function demoBanner() {
@@ -540,14 +577,14 @@ function pageVerify(id) {
   const localCheck = records => Promise.all(records.map(r => Verifier.verify(r, state.keys).catch(() => null)));
   const badge = (label, ok) => h('span', { class: 'pill ' + (ok === true ? 'Strong' : ok === false ? '' : 'Developing'), style: ok === false ? { background: 'var(--bad-soft)', color: 'var(--bad)' } : {} }, label + ': ' + (ok === true ? 'valid' : ok === false ? 'INVALID' : 'not checked'));
   const runId = async raw => {
-    const m = /(ev_[0-9a-f]+)/i.exec(raw || input.value); if (!m) { toast('Paste an evidence link or ID that starts with ev_'); return; }
+    const m = /((?:ev|cert)_[0-9a-f]+)/i.exec(raw || input.value); if (!m) { toast('Paste an evidence or certificate link or ID (it starts with ev_ or cert_)'); return; }
     out.replaceChildren(loading('Checking the signature...'));
     try {
       const res = await api('GET', '/api/verify/' + encodeURIComponent(m[1])), e = res.evidence, [local] = await localCheck([e]);
       const ok = res.valid && local !== false;
       out.replaceChildren(h('div', { class: 'valid-box ' + (ok ? 'ok' : 'bad') }, h('b', null, ok ? 'Authentic and unaltered' : 'FAILED: this record does not match its signature'), ok ? 'Issued by SkillBridge. The details below are exactly what was graded.' : 'Do not rely on this record.'),
         h('div', { class: 'chips' }, badge('Checked in your browser (public key)', local), badge('Issuer registry', res.valid)),
-        recordCard(e, ok), res.portfolioUrl ? h('p', null, h('a', { href: res.portfolioUrl }, 'See the full public portfolio')) : null,
+        e.kind === 'certificate' ? (e.certType === 'simulation' ? Sim.certificateSummary(e, ok) : Learn.certificateSummary(e, ok)) : recordCard(e, ok), res.portfolioUrl ? h('p', null, h('a', { href: res.portfolioUrl }, 'See the full public portfolio')) : null,
         h('p', { class: 'small dim' }, 'The browser check uses the issuer\'s published public key (' + e.keyId + '), so it needs no secret and can run offline. It confirms the record was graded and issued by this system and has not been changed. It does not prove who did the work or that it was done unaided.'));
     } catch (err) {
       out.replaceChildren(h('div', { class: 'valid-box bad' }, h('b', null, isNetworkError(err) ? 'No connection' : 'Not found'), isNetworkError(err) ? 'Looking up an ID needs a connection. A portfolio file can be checked offline below.' : err.message));
@@ -602,6 +639,8 @@ function route() {
   if (hash === '#/verify') return pageVerify('');
   if ((m = /^#\/cohort\/([\w-]+)$/.exec(hash))) return pageCohort(m[1]);
   if (hash === '#/demo') { startDemo(); return; }
+  if (Sim.route(hash) || Learn.route(hash)) return;                 // simulations (home), courses, quizzes, certificates: no profile needed
+  if (hash === '#/skills') return profile() ? pageDashboard() : pageOnboard();   // the developer skill map
   if (hash === '#/tasks') return pageTasks();
   if ((m = /^#\/task\/([\w-]+)$/.exec(hash))) return pageTask(m[1]);
   if (!profile()) return pageOnboard();
@@ -611,6 +650,8 @@ function route() {
   if (hash === '#/profile') return pageProfile();
   return pageDashboard();
 }
+const ctx = { h, mount, api, db, state, toast, fmtDate, plural, pct, loading, isNetworkError, rubricView, copyText, download, Verifier, icon, ICONS };
+Learn.init(ctx); Sim.init(ctx);
 addEventListener('hashchange', route);
 addEventListener('online', () => { toast('Back online'); topbar(); flushQueue(); syncFromServer(); });
 addEventListener('offline', () => { toast('You are offline. Your work is saved on this device.'); route(); });

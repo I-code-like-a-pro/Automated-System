@@ -2,8 +2,8 @@
    - the app shell is cached on first load, so it opens instantly and offline
    - tasks and the skills framework are cached, so you can keep practising offline
    - API calls for your account and submissions always go to the network (answers are queued by the app when offline) */
-const VERSION = 'sb-v6';
-const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/skills.js', '/canonical.js', '/verifier.js', '/localdb.js', '/jobmatch.js', '/share.js', '/runner.js', '/manifest.webmanifest', '/icon.svg'];
+const VERSION = 'sb-v11';
+const SHELL = ['/', '/index.html', '/style.css', '/app.js', '/learn.js', '/sim.js', '/skills.js', '/canonical.js', '/verifier.js', '/localdb.js', '/jobmatch.js', '/share.js', '/runner.js', '/manifest.webmanifest', '/icon.svg'];
 const CACHEABLE_API = ['/api/tasks', '/api/roles', '/api/keys'];
 
 self.addEventListener('install', e => { e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });

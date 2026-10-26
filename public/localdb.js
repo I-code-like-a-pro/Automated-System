@@ -72,23 +72,57 @@
 
     api.cache = { get: (k, fallback = null) => (read('cache', {}) || {})[k] ?? fallback, set(k, v) { const c = read('cache', {}) || {}; c[k] = v; return write('cache', c); } };
 
+    /* learning: progress per course (small, goes in the backup), offline copies of courses and lessons (big, re-downloadable),
+       and the person's signed certificates */
+    const emptyProgress = () => ({ lessonsDone: [], quizzes: {}, certId: null, startedAt: null, lastLesson: null });
+    api.learn = {
+      all: () => read('learn', {}) || {},
+      progress: cid => ({ ...emptyProgress(), ...((read('learn', {}) || {})[cid] || {}) }),
+      save(cid, p) { const all = read('learn', {}) || {}; all[cid] = { ...emptyProgress(), ...p, startedAt: p.startedAt || new Date().toISOString() }; return write('learn', all); },
+      markLesson(cid, lid) { const p = api.learn.progress(cid); if (!p.lessonsDone.includes(lid)) p.lessonsDone.push(lid); p.lastLesson = lid; return api.learn.save(cid, p); },
+      markQuiz(cid, mid, score, evidenceId) { const p = api.learn.progress(cid), q = p.quizzes[mid]; if (!q || score > q.best) p.quizzes[mid] = { best: score, evidenceId: evidenceId || (q && q.evidenceId) || null }; return api.learn.save(cid, p); },
+      /* offline copies: keep the 10 most recently used courses */
+      doc: cid => ((read('courses', {}) || {})[cid] || null),
+      putDoc(cid, patch) {
+        const all = read('courses', {}) || {}, cur = all[cid] || { course: null, lessons: {} };
+        all[cid] = { course: patch.course || cur.course, lessons: { ...cur.lessons, ...(patch.lessons || {}) }, usedAt: new Date().toISOString() };
+        const ids = Object.keys(all).sort((a, b) => (all[b].usedAt > all[a].usedAt ? 1 : -1));
+        ids.slice(10).forEach(id => { delete all[id]; });
+        return write('courses', all);
+      },
+    };
+    api.certs = {
+      list: () => (read('certs', []) || []).slice().sort((a, b) => (b.issuedAt > a.issuedAt ? 1 : -1)),
+      get: id => (read('certs', []) || []).find(c => c.id === id) || null,
+      put(rec) { const list = read('certs', []) || []; if (!list.some(c => c.id === rec.id)) { list.push(rec); write('certs', list); } },
+    };
+
     /* backup file: everything that is personal, including the private key (so a restore on a new device keeps ownership) */
-    api.export = () => ({ app: 'skillbridge', schema: SCHEMA, exportedAt: new Date().toISOString(), ownerKey: meta.ownerKey, profile: api.profile.get(), evidence: api.evidence.list() });
+    api.export = () => ({ app: 'skillbridge', schema: SCHEMA, exportedAt: new Date().toISOString(), ownerKey: meta.ownerKey, profile: api.profile.get(), evidence: api.evidence.list(), learn: api.learn.all(), certificates: api.certs.list() });
     /* validate the shape of a backup. Signatures are checked by the caller (via the server) before records are imported. */
     api.parseBackup = obj => {
       if (!obj || obj.app !== 'skillbridge') throw new Error('This is not a SkillBridge backup file');
       if (obj.ownerKey != null && !/^[a-f0-9]{32,64}$/.test(obj.ownerKey)) throw new Error('The backup has an invalid key');
-      return { ownerKey: obj.ownerKey || null, profile: obj.profile && typeof obj.profile === 'object' ? obj.profile : null, evidence: Array.isArray(obj.evidence) ? obj.evidence : [] };
+      return { ownerKey: obj.ownerKey || null, profile: obj.profile && typeof obj.profile === 'object' ? obj.profile : null, evidence: Array.isArray(obj.evidence) ? obj.evidence : [],
+        learn: obj.learn && typeof obj.learn === 'object' && !Array.isArray(obj.learn) ? obj.learn : {}, certificates: Array.isArray(obj.certificates) ? obj.certificates : [] };
     };
-    api.restore = ({ ownerKey, profile, evidence }) => {
+    api.restore = ({ ownerKey, profile, evidence, learn, certificates }) => {
       if (ownerKey) api.meta.setOwnerKey(ownerKey);
       if (profile) write('profile', profile);
+      /* progress: keep the union of lessons done and the best quiz scores; certificates are re-checked by the caller */
+      Object.entries(learn || {}).forEach(([cid, p]) => {
+        if (!/^crs_[a-f0-9]{10}$/.test(cid) || !p || typeof p !== 'object') return;
+        const cur = api.learn.progress(cid), quizzes = { ...cur.quizzes };
+        Object.entries(p.quizzes || {}).forEach(([mid, q]) => { if (q && Number.isFinite(q.best) && (!quizzes[mid] || q.best > quizzes[mid].best)) quizzes[mid] = { best: q.best, evidenceId: q.evidenceId || null }; });
+        api.learn.save(cid, { ...cur, lessonsDone: [...new Set(cur.lessonsDone.concat(Array.isArray(p.lessonsDone) ? p.lessonsDone.filter(x => /^l\d+-\d+$/.test(x)) : []))], quizzes, certId: cur.certId || (typeof p.certId === 'string' ? p.certId : null), startedAt: cur.startedAt || p.startedAt || null });
+      });
+      (certificates || []).forEach(c => { if (c && c.kind === 'certificate' && typeof c.id === 'string') api.certs.put(c); });
       const merged = bestOnly(read('evidence', []).concat(evidence || [])); write('evidence', merged);
       return merged.length;
     };
 
-    api.wipe = () => { ['meta', 'profile', 'evidence', 'queue', 'drafts', 'cache'].forEach(remove); meta = { schema: SCHEMA, ownerKey: randomKey(), createdAt: new Date().toISOString(), lastBackup: null }; write('meta', meta); };
-    api.usageBytes = () => { let n = 0; ['meta', 'profile', 'evidence', 'queue', 'drafts', 'cache'].forEach(k => { try { n += (storage.getItem(PREFIX + k) || '').length; } catch (e) { /* ignore */ } }); return n; };
+    api.wipe = () => { ['meta', 'profile', 'evidence', 'queue', 'drafts', 'cache', 'learn', 'courses', 'certs'].forEach(remove); meta = { schema: SCHEMA, ownerKey: randomKey(), createdAt: new Date().toISOString(), lastBackup: null }; write('meta', meta); };
+    api.usageBytes = () => { let n = 0; ['meta', 'profile', 'evidence', 'queue', 'drafts', 'cache', 'learn', 'courses', 'certs'].forEach(k => { try { n += (storage.getItem(PREFIX + k) || '').length; } catch (e) { /* ignore */ } }); return n; };
     return api;
   }
   return { open, SCHEMA };

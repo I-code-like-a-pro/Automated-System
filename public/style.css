@@ -1,15 +1,20 @@
+/* Design system: a clean course-site look (white, one strong blue, 12px cards, 48px tap targets), light and dark, switchable by hand.
+   The token names below are what the whole app already uses, so every page follows the palette. */
 :root {
-  --bg: #f6f5f1; --card: #ffffff; --ink: #1c2321; --dim: #5b6b66; --line: #dcdfd9; --accent: #0f766e; --accent-ink: #ffffff;
-  --accent-soft: #d9f0ec; --warn: #a15c00; --warn-soft: #fdf0d9; --bad: #b42318; --bad-soft: #fde8e6; --good: #15803d; --good-soft: #dcf5e4;
-  --claim: #c9d6d2; --radius: 12px; --shadow: 0 1px 2px rgba(0,0,0,.06);
+  color-scheme: light;
+  --bg: #ffffff; --card: #ffffff; --panel: #f0f6ff; --ink: #0f1114; --dim: #5b6780; --line: #dae1ed; --accent: #0056d2; --accent-ink: #ffffff;
+  --accent-soft: #e5f0ff; --warn: #9a5200; --warn-soft: #fff1dd; --bad: #b3112b; --bad-soft: #fde8ec; --good: #1b7f4f; --good-soft: #e3f6ec;
+  --claim: #c9d6ea; --chip: #eaf0fa; --radius: 12px; --shadow: 0 1px 2px rgba(15,17,20,.06);
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #111715; --card: #1a2320; --ink: #e8efec; --dim: #9fb0aa; --line: #2c3935; --accent: #2dd4bf; --accent-ink: #06201c; --accent-soft: #143a35;
-    --warn: #fbbf24; --warn-soft: #3a2d0e; --bad: #ff8b7b; --bad-soft: #3d1b17; --good: #4ade80; --good-soft: #153322; --claim: #3a4a45; --shadow: none; }
+  :root:not([data-theme="light"]) { color-scheme: dark; --bg: #0f1114; --card: #181c23; --panel: #141a26; --ink: #f2f5fa; --dim: #a3aec2; --line: #2c3340; --accent: #5b9bff; --accent-ink: #07142b; --accent-soft: #172542;
+    --warn: #f2b15b; --warn-soft: #33250f; --bad: #ff7d91; --bad-soft: #3a1620; --good: #52c98c; --good-soft: #12301f; --claim: #3a4660; --chip: #222a38; --shadow: none; }
 }
+:root[data-theme="dark"] { color-scheme: dark; --bg: #0f1114; --card: #181c23; --panel: #141a26; --ink: #f2f5fa; --dim: #a3aec2; --line: #2c3340; --accent: #5b9bff; --accent-ink: #07142b; --accent-soft: #172542;
+  --warn: #f2b15b; --warn-soft: #33250f; --bad: #ff7d91; --bad-soft: #3a1620; --good: #52c98c; --good-soft: #12301f; --claim: #3a4660; --chip: #222a38; --shadow: none; }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.5 "Source Sans 3", "Source Sans Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; min-height: 100vh; }
 a { color: var(--accent); }
 h1, h2, h3 { line-height: 1.25; margin: 0 0 .5rem; } h1 { font-size: 1.7rem; } h2 { font-size: 1.25rem; } h3 { font-size: 1.05rem; }
 p { margin: .5rem 0; } .dim { color: var(--dim); } .small { font-size: .875rem; }
@@ -38,7 +43,8 @@ main { max-width: 980px; margin: 0 auto; padding: 20px 16px 80px; }
 label { display: block; font-weight: 600; margin: 12px 0 4px; } .hint { font-weight: 400; color: var(--dim); font-size: .85rem; }
 input[type=text], input[type=email], input[type=search], select, textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
 textarea { min-height: 130px; resize: vertical; } textarea.code { font: 14px/1.5 ui-monospace, Consolas, monospace; min-height: 200px; tab-size: 2; }
-button, .btn { display: inline-block; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font: 600 1rem system-ui; cursor: pointer; text-decoration: none; }
+button, .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font: 600 1rem/1.1 inherit; font-family: inherit; cursor: pointer; text-decoration: none; text-align: center; }
+button:hover:not(:disabled), .btn:hover { filter: brightness(1.08); } .btn.sm, button.sm { min-height: 36px; padding: 0 14px; font-size: .9rem; } .btn.block, button.block { display: flex; width: 100%; }
 button.alt, .btn.alt { background: transparent; color: var(--accent); } button.danger { background: transparent; color: var(--bad); border-color: var(--bad); }
 button:disabled { opacity: .5; cursor: default; } .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 14px; }
 .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0; } .chip { padding: 3px 10px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: .8rem; font-weight: 600; }
@@ -80,3 +86,301 @@ footer.foot { max-width: 980px; margin: 0 auto; padding: 0 16px 40px; color: var
 .ring { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; flex: none; position: relative; }
 .ring::before { content: ""; position: absolute; inset: 9px; border-radius: 50%; background: var(--card); }
 .ring span { position: relative; font-size: 1.5rem; font-weight: 800; color: var(--accent); }
+
+/* ---------------- Learn: courses, lessons, quizzes, certificate ---------------- */
+.course { display: flex; flex-direction: column; gap: 4px; } .course h3 { margin: 4px 0; } .course h3 a { color: var(--ink); text-decoration: none; } .course h3 a:hover { text-decoration: underline; }
+.meta .pill { margin-right: 2px; }
+.lead { font-size: 1.1rem; color: var(--dim); max-width: 70ch; }
+.rich p { margin: .6rem 0; max-width: 72ch; } .rich ul { margin: .4rem 0 .6rem 1.1rem; padding: 0; } .rich li { margin: .25rem 0; }
+.callout { border-left: 5px solid var(--accent); background: var(--accent-soft); }
+.terms { margin: 0; display: grid; grid-template-columns: minmax(110px, 190px) 1fr; gap: 6px 16px; } .terms dt { font-weight: 700; } .terms dd { margin: 0; }
+@media (max-width: 600px) { .terms { grid-template-columns: 1fr; } .terms dd { margin-bottom: 8px; } }
+details.check { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; margin: 8px 0; background: var(--bg); } details.check p { margin: 8px 0 2px; }
+ul.lessons { list-style: none; padding: 0; margin: 8px 0; } ul.lessons li { padding: 6px 0; border-bottom: 1px solid var(--line); display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; } ul.lessons li:last-child { border-bottom: 0; }
+.tick { color: var(--accent); font-weight: 800; width: 1.2em; display: inline-block; }
+.sources { margin: 16px 0; padding: 12px 16px; border: 1px dashed var(--line); border-radius: var(--radius); } .sources ul { margin: 6px 0 6px 1.1rem; padding: 0; word-break: break-word; }
+.quiz-q { border: 1px solid var(--line); } .quiz-q legend { padding: 0 6px; }
+.card.right { border-left: 5px solid var(--good); } .card.wrong { border-left: 5px solid var(--warn); }
+.opt { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin: 6px 0; cursor: pointer; font-weight: 400; background: var(--bg); } .opt input { margin-top: 5px; }
+
+.certificate { background: #fffdf6; color: #1b2a27; border: 10px double #0f766e; border-radius: 6px; padding: 40px 28px; text-align: center; margin: 14px 0; box-shadow: var(--shadow); }
+.certificate .cert-brand { font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #0f766e; }
+.certificate .cert-kicker { font-size: 1.5rem; margin: 6px 0 18px; font-family: Georgia, "Times New Roman", serif; }
+.certificate .cert-line { margin: 6px 0; color: #4a5a56; }
+.certificate .cert-name { font: 700 2.4rem Georgia, "Times New Roman", serif; margin: 6px 0 10px; border-bottom: 2px solid #0f766e; display: inline-block; padding: 0 20px 6px; color: #1b2a27; }
+.certificate .cert-course { font: 700 1.6rem Georgia, "Times New Roman", serif; margin: 6px 0 8px; color: #0f766e; }
+.certificate .cert-modules { max-width: 460px; margin: 16px auto; text-align: left; font-size: .92rem; } .certificate .cert-modules div { display: flex; justify-content: space-between; gap: 16px; padding: 3px 0; border-bottom: 1px solid #e3e6dc; } .certificate .cert-modules .final { font-weight: 700; border-bottom: 0; }
+.certificate .cert-date { margin: 14px 0 4px; font-weight: 600; } .certificate .cert-small { font-size: .75rem; color: #5b6b66; max-width: 600px; margin: 6px auto; word-break: break-word; }
+@media (max-width: 600px) { .certificate { padding: 26px 14px; border-width: 7px; } .certificate .cert-name { font-size: 1.7rem; } .certificate .cert-course { font-size: 1.25rem; } }
+@media print { .certificate { box-shadow: none; page-break-inside: avoid; margin: 0; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* ================= Simulation components generated from the prototype (scoped to .sim) ================= */
+/* buttons */
+.sim .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:8px;border:1px solid transparent;font-weight:600;font-size:16px;line-height:1.1;text-align:center}
+.sim .btn.pri{background:var(--accent);color:var(--accent-ink)}
+.sim .btn.pri:hover{filter:brightness(1.08)}
+.sim .btn.out{border-color:var(--accent);color:var(--accent)}
+.sim .btn.out:hover{background:var(--accent-soft)}
+.sim .btn.white{background:#fff;color:#0B1E4D}
+.sim .btn.sm{min-height:36px;padding:0 14px;font-size:14px}
+.sim .btn.block{width:100%}
+.sim .btn[disabled]{opacity:.45;cursor:not-allowed}
+.sim .link{color:var(--accent);text-decoration:underline;font-weight:600;font-size:14px}
+
+/* chips */
+.sim .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;background:var(--chip);font-size:13px;font-weight:600;color:var(--ink)}
+.sim .chip.ok{background:var(--good-soft);color:var(--good)}
+.sim .chip.warn{background:var(--warn-soft);color:var(--warn)}
+.sim .chip.bad{background:var(--bad-soft);color:var(--bad)}
+.sim .chip.blue{background:var(--accent-soft);color:var(--accent)}
+.sim .chips{display:flex;flex-wrap:wrap;gap:8px}
+.sim .pill{border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:14px;font-weight:600;background:var(--card)}
+
+/* home hero */
+.sim .hero{margin-top:16px;border-radius:12px;color:#fff;padding:28px 20px 24px;background:linear-gradient(135deg,#0A1F5C 0%,#1B2A86 55%,#3B2A8C 100%);display:grid;gap:24px;overflow:hidden}
+.sim .hero h1{font-size:30px}
+.sim .hero p{color:#D7E1FF;max-width:44ch;margin-top:10px}
+.sim .hero .btn{margin-top:18px}
+.sim .widget{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:12px;padding:14px;max-width:320px;backdrop-filter:blur(2px)}
+.sim .widget .t{font-size:34px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.sim .widget .l{display:flex;gap:10px;align-items:center;font-size:14px;color:#E8EEFF;margin-top:8px}
+.sim .dot{width:8px;height:8px;border-radius:50%;background:#52E0A0;flex:none}
+.sim .dot.a{background:#FFC46B}.sim .dot.b{background:#8AB4FF}
+
+.sim .sect{margin-top:28px}
+.sim .sect>h2{margin-bottom:12px}
+.sim .panel{background:var(--panel);border-radius:12px;padding:16px}
+.sim .panel .head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.sim .panel .head h2{font-size:18px}
+.sim .cards{display:grid;gap:12px}
+.sim .course{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;width:100%;box-shadow:var(--shadow)}
+.sim .course:hover{border-color:var(--accent)}
+.sim .org{width:44px;height:44px;border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px;flex:none;background:#0B1E4D}
+.sim .org.v{background:#5B2BC4}
+.sim .course .o{font-size:13px;color:var(--dim)}
+.sim .course .n{font-size:17px;font-weight:600;line-height:1.3;margin:2px 0 4px}
+.sim .course .m{font-size:13px;color:var(--dim)}
+
+.sim .steps{display:grid;gap:12px}
+.sim .step{display:flex;gap:12px;align-items:flex-start}
+.sim .step .tm{min-width:74px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--accent)}
+.sim .step .tx b{display:block}
+.sim .rail{border-left:2px solid var(--line);padding-left:16px;margin-left:4px;display:grid;gap:16px}
+
+/* detail */
+.sim .wash{background:var(--panel);padding:16px 0 24px;border-bottom:1px solid var(--line)}
+.sim .crumbs{font-size:13px;color:var(--dim);display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.sim .crumbs button{color:var(--dim)}
+.sim .facts{display:grid;gap:18px;margin-top:20px}
+.sim .fact b{display:block;font-size:16px}
+.sim .fact span{font-size:14px;color:var(--dim)}
+.sim .checks{list-style:none;padding:0;display:grid;gap:10px}
+.sim .checks li{display:flex;gap:10px;align-items:flex-start}
+.sim .checks svg{color:var(--good);margin-top:3px;flex:none}
+.sim .opt{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:14px;width:100%;text-align:left;background:var(--card)}
+.sim .opt[aria-checked="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--accent-soft)}
+.sim .radio{width:20px;height:20px;border:2px solid var(--dim);border-radius:50%;flex:none;display:grid;place-items:center}
+.sim .opt[aria-checked="true"] .radio{border-color:var(--accent)}
+.sim .opt[aria-checked="true"] .radio::after{content:"";width:10px;height:10px;border-radius:50%;background:var(--accent)}
+.sim .opt b{display:block}
+.sim .opt span{font-size:14px;color:var(--dim)}
+.sim .field{display:grid;gap:6px;margin-top:16px}
+.sim .field label{font-weight:600;font-size:14px}
+.sim .field input{height:48px;border:1px solid var(--line);border-radius:8px;padding:0 14px;background:var(--card)}
+.sim .card{border:1px solid var(--line);border-radius:12px;background:var(--card);padding:16px;box-shadow:var(--shadow)}
+
+/* clock in */
+.sim .center{max-width:520px;margin:0 auto;padding:24px 16px 48px}
+.sim .shiftcard{text-align:center;padding:24px 16px}
+.sim .bigtime{font-size:64px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1;margin:14px 0 6px}
+.sim .bigtime span{font-size:22px;margin-left:6px;color:var(--dim);font-weight:600}
+.sim .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.sim .seg button{border:1px solid var(--line);border-radius:8px;padding:10px 4px;font-size:14px;font-weight:600;background:var(--card)}
+.sim .seg button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.sim .status{border-radius:12px;padding:14px;margin-top:16px;text-align:left;display:flex;gap:12px;align-items:flex-start}
+.sim .status.ok{background:var(--good-soft);color:var(--good)}
+.sim .status.warn{background:var(--warn-soft);color:var(--warn)}
+.sim .status b{display:block;color:var(--ink)}
+.sim .status span{color:var(--dim);font-size:14px}
+
+/* work */
+.sim .wtop{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.sim .wtop .row{height:52px}
+.sim .wtitle{font-weight:600;font-size:16px;line-height:1.2}
+.sim .wtitle small{display:block;font-weight:400;color:var(--dim);font-size:12px}
+.sim .clockpill{font-weight:700;font-variant-numeric:tabular-nums;background:var(--accent-soft);color:var(--accent);padding:6px 12px;border-radius:999px;font-size:15px}
+.sim .track{display:flex;align-items:center;gap:8px;padding:0 0 8px;font-size:12px;color:var(--dim)}
+.sim .bar{flex:1;height:6px;border-radius:99px;background:var(--chip);overflow:hidden}
+.sim .bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px}
+.sim .chan{font-size:13px;color:var(--dim);padding:12px 0 0}
+.sim .feed{padding:12px 0 140px;display:flex;flex-direction:column;gap:16px}
+.sim .msg{display:flex;gap:10px}
+.sim .av{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px;flex:none}
+.sim .mb{min-width:0}
+.sim .mh{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.sim .mh b{font-size:15px}
+.sim .mh .r,.sim .mh time{font-size:12px;color:var(--dim)}
+.sim .txt{margin-top:2px;line-height:1.45}
+.sim .msg.me{flex-direction:row-reverse}
+.sim .msg.me .mb{display:flex;flex-direction:column;align-items:flex-end}
+.sim .msg.me .txt{background:var(--accent);color:var(--accent-ink);padding:10px 14px;border-radius:14px 14px 2px 14px;max-width:88%}
+.sim .sys{text-align:center;font-size:13px;color:var(--dim);display:flex;align-items:center;gap:10px}
+.sim .sys::before,.sim .sys::after{content:"";flex:1;height:1px;background:var(--line)}
+.sim .typing{display:flex;gap:4px;padding:10px 0}
+.sim .typing i{width:7px;height:7px;border-radius:50%;background:var(--dim);animation:b 1s infinite}
+.sim .typing i:nth-child(2){animation-delay:.15s}.sim .typing i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}
+.sim .quick{display:grid;gap:8px;margin-left:46px}
+.sim .quick button{text-align:left;border:1px solid var(--accent);color:var(--accent);border-radius:10px;padding:10px 14px;font-weight:600;background:var(--card)}
+.sim .quick button:hover{background:var(--accent-soft)}
+.sim .task{border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:12px;background:var(--card);padding:16px;margin-left:46px;box-shadow:var(--shadow)}
+.sim .task h3{margin:6px 0 4px}
+.sim .task p{font-size:15px;color:var(--dim)}
+.sim .upl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.sim .file{display:flex;align-items:center;gap:8px;background:var(--chip);border-radius:8px;padding:8px 12px;font-size:14px;font-weight:600;margin-top:14px;width:fit-content;max-width:100%;overflow-wrap:anywhere}
+.sim .spin{width:18px;height:18px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s .8s linear infinite;flex:none}
+@keyframes s{to{transform:rotate(360deg)}}
+.sim .review{display:flex;gap:10px;align-items:center;margin-top:12px;font-size:14px;color:var(--dim)}
+.sim .fb{border-radius:10px;padding:14px;margin-top:14px}
+.sim .fb.ok{background:var(--good-soft)}
+.sim .fb.warn{background:var(--warn-soft)}
+.sim .fb h4{font-size:16px;display:flex;gap:8px;align-items:center}
+.sim .fb.ok h4{color:var(--good)}.sim .fb.warn h4{color:var(--warn)}
+.sim .fb p,.sim .fb li{font-size:15px;color:var(--ink)}
+.sim .fb ul{padding-left:20px;margin:6px 0 10px}
+.sim .fb .chips{margin-top:10px}
+.sim .clockout{margin-left:46px}
+
+/* modal */
+.sim .scrim{position:fixed;inset:0;background:rgba(10,15,30,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sim .sheet{background:var(--card);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px 16px 24px;max-height:92vh;overflow:auto}
+.sim .sheet .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sim .sheet h2{font-size:21px;margin-bottom:6px}
+.sim .choices{display:grid;gap:10px;margin-top:14px}
+.sim .choice{border:1px solid var(--line);border-radius:12px;padding:14px;text-align:left;background:var(--card);width:100%}
+.sim .choice:hover{border-color:var(--accent)}
+.sim .choice b{display:block}
+.sim .choice span{font-size:14px;color:var(--dim)}
+.sim .choice.right{border-color:var(--good);background:var(--good-soft)}
+.sim .choice.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.sim .why{margin-top:14px;font-size:15px}
+@media(min-width:620px){.sim .scrim{align-items:center}.sim .sheet{border-radius:16px}}
+
+/* summary + certificate */
+.sim .kv{display:grid;gap:0}
+.sim .kv>div{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:center}
+.sim .kv>div:last-child{border-bottom:0}
+.sim .kv .k{color:var(--dim);font-size:15px}
+.sim .kv .v{font-weight:600;text-align:right}
+.sim .paper{--ink:#0F1114;--ink2:#5B6780;--line:#DAE1ED;--blue:#0056D2;--blue-soft:#E5F0FF;
+  background:#fff;color:#0F1114;border:1px solid #DAE1ED;border-radius:6px;padding:28px 20px;text-align:center;position:relative;box-shadow:0 2px 10px rgba(15,17,20,.12)}
+.sim .paper::before{content:"";position:absolute;inset:8px;border:1px solid #DAE1ED;border-radius:3px;pointer-events:none}
+.sim .paper .logo{display:block;margin:0 auto 18px;font-size:22px}
+.sim .paper .kicker{font-size:14px;color:#5B6780}
+.sim .paper .name{font-family:"Source Serif 4",Georgia,serif;font-size:32px;line-height:1.15;margin:8px 0 14px;font-weight:600;overflow-wrap:anywhere}
+.sim .paper .role{font-size:24px;font-weight:700;margin:6px 0 2px}
+.sim .pstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:22px 0;border-top:1px solid #DAE1ED;border-bottom:1px solid #DAE1ED;padding:14px 0}
+.sim .pstats b{display:block;font-size:22px;line-height:1.1}
+.sim .pstats span{font-size:12px;color:#5B6780}
+.sim .sign{display:flex;justify-content:space-between;gap:12px;text-align:left;align-items:flex-end;margin-top:8px}
+.sim .sign .sg{font-family:"Source Serif 4",Georgia,serif;font-style:italic;font-size:22px;border-bottom:1px solid #0F1114;padding:0 12px 2px 0;display:inline-block}
+.sim .sign small{display:block;color:#5B6780;font-size:12px}
+.sim .seal{width:64px;height:64px;border-radius:50%;border:2px solid #0056D2;color:#0056D2;display:grid;place-items:center;font-size:11px;font-weight:700;text-align:center;line-height:1.1;flex:none}
+.sim .code{margin-top:16px;font-size:12px;color:#5B6780;overflow-wrap:anywhere}
+.sim .skill{display:grid;gap:6px;padding:12px 0;border-bottom:1px solid var(--line)}
+.sim .skill:last-child{border-bottom:0}
+.sim .skill .sh{display:flex;justify-content:space-between;font-weight:600}
+.sim .skill .bar{height:8px}
+.sim .skill p{font-size:14px;color:var(--dim)}
+.sim .logrow{padding:12px 0;border-bottom:1px solid var(--line);display:grid;gap:4px}
+.sim .logrow:last-child{border-bottom:0}
+.sim .logrow .lr{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:14px}
+
+/* drawer + toast */
+
+
+
+
+
+
+
+.sim .foot{margin-top:40px;padding:20px 0 40px;border-top:1px solid var(--line);font-size:13px;color:var(--dim)}
+.sim .screen{animation:none}
+
+@media(min-width:720px){
+  .sim .hero{grid-template-columns:1.3fr 1fr;align-items:center;padding:36px}
+  .sim .hero h1{font-size:36px}
+  .sim .cards{grid-template-columns:1fr 1fr}
+  .sim .facts{grid-template-columns:repeat(2,1fr)}
+  .sim h1{font-size:34px}
+}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+
+/* ================= Header, menu drawer (app-wide) ================= */
+header.top { background: var(--bg); border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; }
+.top-in { max-width: 980px; margin: 0 auto; height: 56px; padding: 0 12px; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; }
+.logo { font-size: 25px; font-weight: 700; letter-spacing: -.03em; color: var(--accent); padding: 0 4px; text-decoration: none; line-height: 1; }
+.icon { width: 40px; height: 40px; min-height: 0; padding: 0; display: grid; place-items: center; border-radius: 8px; color: var(--ink); background: none; border: 0; flex: none; }
+.icon:hover:not(:disabled) { background: var(--chip); filter: none; }
+.drawer { position: fixed; inset: 0; z-index: 60; background: rgba(10, 15, 30, .5); display: flex; }
+.dpanel { background: var(--card); width: min(330px, 88vw); height: 100%; padding: 16px; overflow: auto; }
+.dscrim { flex: 1; }
+.dpanel .item { display: flex; gap: 12px; width: 100%; text-align: left; padding: 10px 10px; border-radius: 8px; align-items: center; color: var(--ink); text-decoration: none; background: none; border: 0; min-height: 0; justify-content: flex-start; font-weight: 400; }
+.dpanel .item b { display: block; font-size: 16px; } .dpanel .item small { display: block; font-size: 13px; }
+.dpanel .item:hover { background: var(--chip); filter: none; } .dpanel .item.on { background: var(--accent-soft); }
+.dpanel .item.on b { color: var(--accent); }
+.sim .sp { flex: 1; } .sim .row.nowrap { flex-wrap: nowrap; }
+
+/* ================= Simulation pages (the prototype's components, scoped to .sim) ================= */
+.sim, .sim * { box-sizing: border-box; } .sim * { margin: 0; }
+.sim :where(button:not(.btn)) { display: block; min-height: 0; padding: 0; gap: 0; justify-content: initial; border: 0; background: none; color: inherit; font: inherit; text-align: left; }
+.sim :where(button:not(.btn)):hover { filter: none; }
+.sim .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
+.sim .row { display: flex; align-items: center; gap: 8px; margin-top: 0; }
+.sim .muted { color: var(--dim); } .sim .xs { font-size: 12px; } .sim .small { font-size: 14px; }
+.sim h1 { font-size: 28px; line-height: 1.2; font-weight: 700; letter-spacing: -.01em; margin: 0; } .sim h2 { font-size: 22px; line-height: 1.25; font-weight: 700; margin: 0; } .sim h3 { font-size: 18px; line-height: 1.3; font-weight: 600; margin: 0; }
+.sim p { margin: 0; } .sim svg { display: block; } .sim ul { margin: 0; }
+.sim .btn { background: transparent; border: 1px solid transparent; } .sim .btn.pri { border-color: transparent; }
+.sim .btn.out { background: transparent; } .sim .btn[disabled] { opacity: .45; cursor: not-allowed; }
+.sim .link { color: var(--accent); text-decoration: underline; font-weight: 600; font-size: 14px; background: none; border: 0; padding: 0; min-height: 0; cursor: pointer; display: inline; }
+.sim .card { margin-bottom: 0; }
+.sim .course { text-decoration: none; color: inherit; } .sim a.course:hover { border-color: var(--accent); }
+.sim .org { width: 44px; height: 44px; border-radius: 8px; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 15px; flex: none; }
+.sim .chip { background: var(--chip); color: var(--ink); } .sim .chip.ok { background: var(--good-soft); color: var(--good); } .sim .chip.warn { background: var(--warn-soft); color: var(--warn); } .sim .chip.blue { background: var(--accent-soft); color: var(--accent); }
+.sim .field input, .sim .field textarea, .sim .field select { width: 100%; border: 1px solid var(--line); border-radius: 8px; padding: 0 14px; background: var(--card); color: var(--ink); font: inherit; height: 48px; }
+.sim .field textarea { height: auto; min-height: 140px; padding: 12px 14px; }
+.sim .field label { font-weight: 600; font-size: 14px; margin: 0; }
+.sim .hero { background: linear-gradient(135deg, #0a1f5c 0%, #1b2a86 55%, #3b2a8c 100%); }
+.sim .hero h1 { color: #fff; max-width: none; } .sim .hero p { font-size: 16px; }
+.sim .seg button:not(.btn) { border: 1px solid var(--line); border-radius: 8px; padding: 10px 4px; font-size: 14px; font-weight: 600; background: var(--card); text-align: center; }
+.sim .seg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.sim .choice, .sim .opt { cursor: pointer; } .sim .choice { display: block; width: 100%; }
+.sim .quick button:not(.btn) { text-align: left; border: 1px solid var(--accent); color: var(--accent); border-radius: 10px; padding: 10px 14px; font-weight: 600; background: var(--card); }
+.sim .quick button:not(.btn):hover { background: var(--accent-soft); }
+.sim .task textarea { width: 100%; min-height: 150px; margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font: inherit; resize: vertical; }
+.sim .scrim { position: fixed; inset: 0; background: rgba(10, 15, 30, .55); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.sim .sheet { background: var(--card); color: var(--ink); width: 100%; max-width: 560px; border-radius: 16px 16px 0 0; padding: 20px 16px 24px; max-height: 92vh; overflow: auto; }
+.sim .sheet .choices { display: grid; gap: 10px; margin-top: 14px; }
+.sim .wtop { position: sticky; top: 0; z-index: 20; background: var(--bg); border-bottom: 1px solid var(--line); }
+.sim .wtop .row { height: 52px; }
+.sim .feed { padding: 12px 0 140px; }
+.sim .paper { --ink: #0f1114; --dim: #5b6780; background: #fff; color: #0f1114; }
+.sim .paper .logo { color: #0056d2; display: block; margin: 0 auto 18px; font-size: 22px; text-align: center; }
+.sim .code { margin-top: 16px; }
+.sim .sect .rail { margin-top: 0; }
+.sim .runrow { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+.sim .pstats.n2 { grid-template-columns: repeat(2, 1fr); }
+@media print { .sim .noprint { display: none !important; } .sim .paper { box-shadow: none; } header.top, #foot { display: none !important; } }
+@media (min-width: 620px) { .sim .scrim { align-items: center; } .sim .sheet { border-radius: 16px; } }
+@media (prefers-reduced-motion: reduce) { .sim *, .sim *::before, .sim *::after { animation: none !important; transition: none !important; } }
+
+/* the workday screen is full-bleed: no app header, a narrow centred column */
+main:has(.wtop) { padding: 0 16px 80px; max-width: 760px; }
+header.top:has(#topbar:empty) { display: none; }
+.sim .wtop { margin: 0 -16px; padding: 0 16px; }
+
+/* links inside simulation pages read as cards and buttons, not as underlined text */
+.sim a:not(.btn):not(.link) { color: inherit; text-decoration: none; }
+.sim .crumbs a, .sim .small a, .sim .notice a { color: var(--accent); text-decoration: underline; }
+.sim a.btn { text-decoration: none; }
