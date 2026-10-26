@@ -1,0 +1,248 @@
+{
+  "software-engineer": {
+    "title": "Junior Software Engineer",
+    "summary": "Entry-level engineers are hired for judgement as much as syntax: finding the real cause of a bug, writing code others can trust, communicating clearly and working in a team.",
+    "targetLevel": 70,
+    "skills": [
+      {
+        "id": "problem-solving",
+        "name": "Problem solving",
+        "desc": "Break a problem down and write a correct, readable solution.",
+        "hints": [
+          "algorithm",
+          "data structure",
+          "programming",
+          "competitive",
+          "leetcode",
+          "discrete",
+          "computer science",
+          "python",
+          "java",
+          "javascript",
+          "c++"
+        ],
+        "jobHints": [
+          "algorithm",
+          "data structure",
+          "problem solving",
+          "problem-solving",
+          "analytical",
+          "logic",
+          "coding",
+          "programming",
+          "python",
+          "java",
+          "javascript",
+          "typescript",
+          "c++",
+          "c#",
+          "golang"
+        ]
+      },
+      {
+        "id": "debugging",
+        "name": "Debugging",
+        "desc": "Find and fix the cause of a defect, not just the symptom.",
+        "hints": [
+          "debug",
+          "bug",
+          "software engineering",
+          "operating system",
+          "systems",
+          "troubleshoot",
+          "internship"
+        ],
+        "jobHints": [
+          "debug",
+          "troubleshoot",
+          "root cause",
+          "bug",
+          "incident",
+          "on-call",
+          "production issue",
+          "diagnos",
+          "fix issues"
+        ]
+      },
+      {
+        "id": "testing",
+        "name": "Testing",
+        "desc": "Prove code works with meaningful tests, including edge cases.",
+        "hints": [
+          "testing",
+          "unit test",
+          "qa",
+          "tdd",
+          "quality",
+          "software engineering",
+          "verification"
+        ],
+        "jobHints": [
+          "testing",
+          "unit test",
+          "test automation",
+          "tdd",
+          "qa ",
+          "quality",
+          "jest",
+          "pytest",
+          "junit",
+          "integration test",
+          "test coverage"
+        ]
+      },
+      {
+        "id": "code-review",
+        "name": "Code review",
+        "desc": "Give and receive specific, kind, useful feedback on code.",
+        "hints": [
+          "code review",
+          "pull request",
+          "open source",
+          "github",
+          "capstone",
+          "peer review",
+          "group project"
+        ],
+        "jobHints": [
+          "code review",
+          "pull request",
+          "peer review",
+          "review code"
+        ]
+      },
+      {
+        "id": "version-control",
+        "name": "Version control",
+        "desc": "Work safely with branches, merges and conflicts in a shared repository.",
+        "hints": [
+          "git",
+          "github",
+          "gitlab",
+          "version control",
+          "open source",
+          "merge",
+          "branch"
+        ],
+        "jobHints": [
+          "git",
+          "github",
+          "gitlab",
+          "version control",
+          "branching",
+          "merge",
+          "ci/cd",
+          "bitbucket"
+        ]
+      },
+      {
+        "id": "communication",
+        "name": "Written communication",
+        "desc": "Explain problems, status and decisions clearly to technical and non-technical readers.",
+        "hints": [
+          "presentation",
+          "report",
+          "writing",
+          "technical writing",
+          "seminar",
+          "debate",
+          "communication",
+          "essay"
+        ],
+        "jobHints": [
+          "communicat",
+          "documentation",
+          "written",
+          "stakeholder",
+          "explain",
+          "presentation",
+          "technical writing",
+          "clear writing"
+        ]
+      },
+      {
+        "id": "requirements",
+        "name": "Requirements and planning",
+        "desc": "Turn a vague request into clear questions, scope and an estimate.",
+        "hints": [
+          "requirements",
+          "analysis",
+          "user stor",
+          "software engineering",
+          "design",
+          "hci",
+          "product",
+          "agile",
+          "scrum",
+          "project management"
+        ],
+        "jobHints": [
+          "requirements",
+          "user stories",
+          "agile",
+          "scrum",
+          "kanban",
+          "estimat",
+          "planning",
+          "jira",
+          "roadmap",
+          "backlog",
+          "acceptance criteria"
+        ]
+      },
+      {
+        "id": "security",
+        "name": "Security basics",
+        "desc": "Recognise common vulnerabilities and choose safe defaults.",
+        "hints": [
+          "security",
+          "cryptography",
+          "network",
+          "privacy",
+          "ethical hacking",
+          "cyber",
+          "web development",
+          "database"
+        ],
+        "jobHints": [
+          "security",
+          "owasp",
+          "authentication",
+          "authorization",
+          "encryption",
+          "vulnerab",
+          "secure coding",
+          "xss",
+          "sql injection",
+          "privacy"
+        ]
+      },
+      {
+        "id": "teamwork",
+        "name": "Teamwork",
+        "desc": "Collaborate, ask for help early and handle interruptions professionally.",
+        "hints": [
+          "team",
+          "group project",
+          "capstone",
+          "hackathon",
+          "society",
+          "club",
+          "internship",
+          "volunteer",
+          "leadership"
+        ],
+        "jobHints": [
+          "team",
+          "collaborat",
+          "cross-functional",
+          "mentor",
+          "stand-up",
+          "standup",
+          "pair programming",
+          "fast-paced"
+        ]
+      }
+    ]
+  }
+}

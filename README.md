@@ -24,18 +24,18 @@ Requires Node.js 20+. **No `npm install`.**
 
 ```bash
 node server.js          # http://localhost:3000
-npm test                # 43 tests
+npm test                # 57 tests
 npm run smoke           # student + employer + university walkthrough on a real server
 ```
-
-Or with Docker (untested here, see note): `docker compose up --build`.
 
 | Variable | Purpose |
 |---|---|
 | `PORT` | Port (default 3000) |
 | `DATA_DIR` | Where `db.json` and `signing-key.pem` live (default `./data`). **Mount a volume here in production** |
 | `SIGNING_KEY_PEM` | Provide the Ed25519 private key inline instead of a file |
-| `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | Optional AI feedback for written tasks (server-side only; default model `claude-haiku-5-5`) |
+| `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` | Turns on the AI: it **writes fresh tasks** (`POST /api/generate`) and **marks written tasks** and reviews code. Server-side only. Put it in a `.env` file next to `server.js` (already git-ignored); values in `.env` win over machine-wide variables. Anthropic is used if both are set, or choose with `AI_PROVIDER=gemini|anthropic` |
+| `AI_MODEL` / `AI_GEN_MODEL` | Model(s) for marking and for writing tasks, comma-separated to set a fallback order. Gemini defaults: `gemini-3.1-flash-lite` then `gemini-3.5-flash` then `gemini-3-flash-preview` for marking, `gemini-3.5-flash` first for writing; an overloaded, withdrawn or slow model falls through to the next. Anthropic defaults: `claude-haiku-5-5` / `claude-sonnet-5-5` |
+| `GEN_DAILY_LIMIT` | Most AI-written tasks per day across everyone (default 300), to cap cost |
 | `DEMO` | `1` enables the one-click demo and demo class, `0` disables. Defaults to on, and off when `NODE_ENV=production` |
 | `COHORT_MIN` | Minimum class size before a dashboard unlocks (default 5) |
 
@@ -76,11 +76,11 @@ A random key generated in the browser links a person to their server records. It
 | `POST /api/publish`, `GET /api/portfolio/:id` | opt-in public portfolio |
 | `GET /api/verify/:id`, `POST /api/verify` | verify by id, or check records you send |
 | `POST /api/cohort/join` / `leave`, `GET /api/cohort/mine`, `GET /api/cohort/:code` | voluntary classes and anonymous dashboard |
-| `POST /api/demo` | one-click demo student and demo class (see `DEMO`) |
+| `POST /api/generate` | (owner key) AI writes a new task for a skill; validated, stored with its answer key on the server, returned without answers |`n| `POST /api/demo` | one-click demo student and demo class (see `DEMO`) |
 
 ## Project map
 
-`server.js` API + static hosting · `lib/` grader, sandbox, signer, AI, database, cohort aggregator, demo data · `public/` the app (`app.js`, `localdb.js`, `verifier.js`, `jobmatch.js`, `skills.js`, `share.js`, `sw.js`, `runner.js`) · `data/` roles and tasks as plain JSON · `test/` 43 tests · `scripts/` smoke test and content tools · `docs/` architecture and pitch kit ([docs/PITCH.md](docs/PITCH.md): demo script, Q&A, metrics, roadmap).
+`server.js` API + static hosting · `lib/` grader, sandbox, signer, AI marking (`ai.js`), AI task writer (`generate.js`), database, cohort aggregator, demo data · `public/` the app (`app.js`, `localdb.js`, `verifier.js`, `jobmatch.js`, `skills.js`, `share.js`, `sw.js`, `runner.js`) · `data/` roles and tasks as plain JSON · `test/` 43 tests · `scripts/` smoke test and content tools · `docs/` architecture and pitch kit ([docs/PITCH.md](docs/PITCH.md): demo script, Q&A, metrics, roadmap).
 
 **Adding a role or task** is data work: add skills (with `hints` for coursework and `jobHints` for ads) to `data/roles.json`, tasks to `data/tasks.json` (`mcq`, `scenario`, `code` with hidden tests, `written` with a rubric). Run `node scripts/rebalance-answers.js` to spread answer positions, then `npm test`.
 
@@ -89,11 +89,11 @@ A random key generated in the browser links a person to their server records. It
 - **Not proctored.** Anyone can get help or use an AI assistant. Treat evidence as one signal, best paired with a live conversation. Roadmap: timed attempts, randomised variants, similarity checks, mentor attestation.
 - **Job match is a transparent keyword analysis, not a hiring prediction.** It also names tools in an ad that SkillBridge does not assess (SQL, Docker, ...), so "100% ready" never reads as "hired".
 - **The offline checklist cannot judge writing like a person.** It penalises keyword stuffing and repetition but can be gamed. AI scoring or a human reviewer is better for high-stakes use.
-- **AI grading was not tested against the live API** (only a mocked response and the failure fallback).
+- **The AI is only lightly tested live, and only on Gemini.** One real run covered all four task types, marking (a strong answer scored 100, weak ones low, a prompt-injection attempt scored 4) and the whole journey through the public link. Anthropic support is tested with mocked replies only. Google overloads and retires models often, so marking sometimes returns "try again" and generating a task can take 10 to 45 seconds. AI-written tasks are validated hard (shape checks, shuffled answers, code tasks need a reference solution that passes every test), but a human has not reviewed them.
 - **localStorage can be lost** (cleared data, another browser). Backups matter; the app reminds students every 14 days and asks the browser to keep the data.
 - **The grader sandbox uses Node's `vm`, not a hardened boundary.** Fine for a pilot where students run their own code; use a container or separate low-privilege service for open deployment.
 - The JSON-file database suits a pilot (thousands of students, one process). Swap `lib/db.js` for SQLite/Postgres to scale.
 - One role is built; more need tasks written with domain experts. Demo and class data are synthetic.
-- **Not verified in a real browser here:** installing the PWA and offline behaviour. The service worker's logic is tested in a simulated worker, but test install and offline in Chrome before a live demo. The Docker files were not built here.
+- **Not verified in a real browser here:** installing the PWA and offline behaviour. The service worker's logic is tested in a simulated worker, but test install and offline in Chrome before a live demo.
 #   A u t o m a t e d - S y s t e m  
  

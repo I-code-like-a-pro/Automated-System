@@ -1,0 +1,1584 @@
+[
+  {
+    "id": "cart-total-off-by-one",
+    "role": "software-engineer",
+    "type": "mcq",
+    "difficulty": 1,
+    "minutes": 5,
+    "title": "Checkout crashes on the last item",
+    "skills": {
+      "debugging": 2,
+      "problem-solving": 1
+    },
+    "from": {
+      "name": "Dana",
+      "title": "Engineering Manager"
+    },
+    "brief": "Customers see \"Cannot read properties of undefined (reading 'price')\" at checkout. Here is the function. Which change fixes the real cause?",
+    "mcq": {
+      "code": "function total(items) {\n  let sum = 0;\n  for (let i = 0; i <= items.length; i++) {\n    sum += items[i].price;\n  }\n  return sum;\n}",
+      "options": [
+        "Wrap the loop body in try/catch and ignore the error",
+        "Change `<=` to `<` in the loop condition",
+        "Start `sum` at 1 instead of 0",
+        "Add `items.push({price: 0})` before the loop"
+      ],
+      "correct": 1,
+      "explain": [
+        "That hides the symptom. The loop still reads past the end of the array and silently skips work.",
+        "Right. Arrays are zero-indexed, so the last valid index is length - 1. The loop read one element past the end.",
+        "That makes every total wrong by 1.",
+        "That mutates the caller's data and masks the off-by-one."
+      ]
+    }
+  },
+  {
+    "id": "admin-assignment-bug",
+    "role": "software-engineer",
+    "type": "mcq",
+    "difficulty": 1,
+    "minutes": 5,
+    "title": "Everyone can see the admin panel",
+    "skills": {
+      "debugging": 2,
+      "security": 1
+    },
+    "from": {
+      "name": "Dana",
+      "title": "Engineering Manager"
+    },
+    "brief": "Security reports that regular users can open the admin panel. This is the check. What is wrong?",
+    "mcq": {
+      "code": "if (user.role = 'admin') {\n  showAdminPanel();\n}",
+      "options": [
+        "It assigns instead of comparing: use `user.role === 'admin'`",
+        "It should be `if (user.role)`",
+        "Add `|| true` so the check always passes",
+        "The panel should be hidden with CSS instead"
+      ],
+      "correct": 0,
+      "explain": [
+        "Right. A single `=` assigns 'admin' to the role, which is truthy, so the check passes for everyone. It also overwrites the user's role.",
+        "That shows the panel to any user who has any role at all.",
+        "That makes the bug worse.",
+        "CSS only hides things visually. Authorization has to be enforced in code (and on the server)."
+      ]
+    }
+  },
+  {
+    "id": "async-foreach",
+    "role": "software-engineer",
+    "type": "mcq",
+    "difficulty": 2,
+    "minutes": 7,
+    "title": "Orders are marked saved before they are saved",
+    "skills": {
+      "debugging": 2,
+      "problem-solving": 1
+    },
+    "from": {
+      "name": "Priya",
+      "title": "Senior Developer"
+    },
+    "brief": "Users see 'Done!' but some items are missing. `save` returns a promise. Which fix is correct and robust?",
+    "mcq": {
+      "code": "items.forEach(async (item) => {\n  await save(item);\n});\nshowDone();",
+      "options": [
+        "Wrap `showDone()` in `setTimeout(..., 1000)`",
+        "Make `showDone()` an async function",
+        "Replace `forEach` with `map` and keep the rest the same",
+        "`await Promise.all(items.map(save));` then `showDone();`"
+      ],
+      "correct": 3,
+      "explain": [
+        "A fixed delay is a guess and fails on slow connections.",
+        "Making `showDone` async does not make it wait for the saves.",
+        "`map` returns promises, but without awaiting them the bug is unchanged.",
+        "Right. `forEach` ignores the promises returned by async callbacks. `Promise.all` waits for every save."
+      ]
+    }
+  },
+  {
+    "id": "cache-prices",
+    "role": "software-engineer",
+    "type": "mcq",
+    "difficulty": 2,
+    "minutes": 6,
+    "title": "Speed up the price lookup",
+    "skills": {
+      "requirements": 2,
+      "problem-solving": 1
+    },
+    "from": {
+      "name": "Dana",
+      "title": "Engineering Manager"
+    },
+    "brief": "getPrices() calls a slow API on every page view. The client told us prices must never be more than 60 seconds old. Which approach fits?",
+    "mcq": {
+      "code": "async function getPrices() {\n  return await slowApi.fetch('/prices');\n}",
+      "options": [
+        "Cache the result forever in a global variable",
+        "Hard-code today's prices",
+        "Cache the result with a 60 second expiry",
+        "Call the API less often by loading prices only on Mondays"
+      ],
+      "correct": 2,
+      "explain": [
+        "Prices would go stale; the requirement says at most 60 seconds old.",
+        "Hard-coded prices are wrong by tomorrow.",
+        "Right. A cache with a 60 s time-to-live respects the requirement and removes most of the slow calls.",
+        "That ignores the freshness requirement."
+      ]
+    }
+  },
+  {
+    "id": "sql-injection",
+    "role": "software-engineer",
+    "type": "mcq",
+    "difficulty": 2,
+    "minutes": 6,
+    "title": "Login errors in production",
+    "skills": {
+      "security": 3,
+      "debugging": 1
+    },
+    "from": {
+      "name": "Omar",
+      "title": "Backend Developer"
+    },
+    "brief": "Some usernames crash the login page. A teammate suspects the query. What is the safest fix?",
+    "mcq": {
+      "code": "function findUser(name) {\n  const sql = \"SELECT * FROM users WHERE name = '\" + name + \"'\";\n  return db.query(sql);\n}",
+      "options": [
+        "Strip quote characters from the name with a regular expression",
+        "Use a parameterized query: `db.query('SELECT * FROM users WHERE name = ?', [name])`",
+        "Wrap the query in try/catch and return null on error",
+        "Convert the name to lowercase first"
+      ],
+      "correct": 1,
+      "explain": [
+        "Blacklisting characters is fragile and easy to bypass.",
+        "Right. Parameterized queries keep user input as data, never as SQL.",
+        "That hides the error but leaves the hole open.",
+        "That does not stop injection."
+      ]
+    }
+  },
+  {
+    "id": "sort-mutates",
+    "role": "software-engineer",
+    "type": "mcq",
+    "difficulty": 1,
+    "minutes": 5,
+    "title": "Sorting changes the original list",
+    "skills": {
+      "debugging": 2,
+      "problem-solving": 1
+    },
+    "from": {
+      "name": "Mei",
+      "title": "Designer"
+    },
+    "brief": "The product list reorders itself on screen after we sort a 'copy' of it. Why, and what is the fix?",
+    "mcq": {
+      "code": "function sortedByPrice(items) {\n  return items.sort((a, b) => a.price - b.price);\n}",
+      "options": [
+        "`.sort()` mutates the array in place. Sort a copy: `[...items].sort(...)`",
+        "Call `items.reverse()` afterwards",
+        "Rename the function to `sortInPlace`",
+        "Use `items.filter()` instead of sort"
+      ],
+      "correct": 0,
+      "explain": [
+        "Right. `Array.prototype.sort` changes the array it is called on, so the caller's list changed too.",
+        "That would not stop the original from being changed.",
+        "Renaming does not change the behaviour.",
+        "`filter` does not sort."
+      ]
+    }
+  },
+  {
+    "id": "interval-leak",
+    "role": "software-engineer",
+    "type": "mcq",
+    "difficulty": 2,
+    "minutes": 6,
+    "title": "The dashboard slows down over time",
+    "skills": {
+      "debugging": 3
+    },
+    "from": {
+      "name": "Priya",
+      "title": "Senior Developer"
+    },
+    "brief": "Users report the browser getting slower each time they revisit the dashboard. This React effect is the suspect.",
+    "mcq": {
+      "code": "useEffect(() => {\n  setInterval(tick, 1000);\n}, []);",
+      "options": [
+        "Increase the interval to 10 seconds",
+        "Call `tick()` once at startup instead",
+        "Add a second `setInterval` that clears the first",
+        "Return a cleanup: `const id = setInterval(tick, 1000); return () => clearInterval(id);`"
+      ],
+      "correct": 3,
+      "explain": [
+        "A slower leak is still a leak.",
+        "That removes the feature instead of fixing it.",
+        "That is convoluted and still leaks.",
+        "Right. Each mount starts a new timer that is never stopped, so timers pile up. Cleanup stops them."
+      ]
+    }
+  },
+  {
+    "id": "merge-conflict",
+    "role": "software-engineer",
+    "type": "scenario",
+    "difficulty": 2,
+    "minutes": 8,
+    "title": "A merge conflict before the deadline",
+    "skills": {
+      "version-control": 3,
+      "teamwork": 1
+    },
+    "from": {
+      "name": "Sam",
+      "title": "Developer"
+    },
+    "brief": "You are finishing a feature when Git reports a conflict with a teammate's work. Choose what you would actually do at each step.",
+    "scenario": {
+      "steps": [
+        {
+          "prompt": "You run `git pull` and Git reports a merge conflict in `settings.js`. What do you do?",
+          "options": [
+            "Delete the conflict markers and keep only my version",
+            "Run `git reset --hard` to make the problem go away",
+            "Open the file, read both sides, combine the intended changes, then run the tests",
+            "If the other change is unclear, ask the teammate what they intended, then resolve it"
+          ],
+          "scores": [
+            0.2,
+            0,
+            1,
+            0.9
+          ],
+          "explain": [
+            "That silently throws away your teammate's work.",
+            "That destroys your uncommitted work and does not resolve anything.",
+            "Good. Understanding both sides and verifying with tests is the safe path.",
+            "Good. Asking early prevents a wrong merge."
+          ]
+        },
+        {
+          "prompt": "After resolving the conflict, a few tests fail. What next?",
+          "options": [
+            "Commit anyway and fix it later",
+            "Investigate which side of the merge broke them, fix it and re-run the tests",
+            "Comment out the failing tests",
+            "Revert everything and ask for help in the team channel with details"
+          ],
+          "scores": [
+            0.1,
+            1,
+            0,
+            0.6
+          ],
+          "explain": [
+            "Broken commits slow the whole team.",
+            "Good. Tests are telling you something real.",
+            "Hiding failures is worse than the failures.",
+            "Asking is fine, but try first and share what you tried."
+          ]
+        },
+        {
+          "prompt": "You are ready to push, but your branch is behind `main` by a few commits.",
+          "options": [
+            "Update from `main` (rebase or merge), re-run the tests, then push or open a pull request",
+            "`git push --force`",
+            "Push to a random new branch and tell nobody",
+            "Open a pull request describing the conflict you resolved and how you tested it"
+          ],
+          "scores": [
+            1,
+            0,
+            0.3,
+            0.95
+          ],
+          "explain": [
+            "Good. Always integrate the latest main and re-test.",
+            "Force pushing can overwrite other people's commits.",
+            "Surprise branches create confusion.",
+            "Good. A clear PR description helps reviewers."
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "incident-triage",
+    "role": "software-engineer",
+    "type": "scenario",
+    "difficulty": 2,
+    "minutes": 8,
+    "title": "Production incident: login errors",
+    "skills": {
+      "teamwork": 2,
+      "communication": 1,
+      "debugging": 1
+    },
+    "from": {
+      "name": "Dana",
+      "title": "Engineering Manager"
+    },
+    "brief": "It is 9:20 and customers cannot log in. You are the first engineer online. Choose how you would respond at each stage.",
+    "scenario": {
+      "steps": [
+        {
+          "prompt": "An alert says login errors are spiking. What is your first move?",
+          "options": [
+            "Roll back the last deploy without telling anyone",
+            "Wait for someone more senior to notice",
+            "Post 'is anyone looking at this?' and do nothing else",
+            "Check dashboards and logs, and tell the team in the incident channel that you are investigating"
+          ],
+          "scores": [
+            0.3,
+            0.1,
+            0.3,
+            1
+          ],
+          "explain": [
+            "A silent rollback can cause confusion and hide evidence.",
+            "Waiting makes the outage longer.",
+            "Asking is fine, but you can start looking at the same time.",
+            "Good. Investigating while keeping people informed avoids duplicate work."
+          ]
+        },
+        {
+          "prompt": "Logs show the errors started right after yesterday's deploy touching the login query. What now?",
+          "options": [
+            "Hot-fix production directly without review",
+            "Tell customers it is their network",
+            "Propose a rollback to the manager, with the evidence from the logs",
+            "Roll back, announce it in the channel and open a ticket for a proper fix"
+          ],
+          "scores": [
+            0.2,
+            0,
+            1,
+            1
+          ],
+          "explain": [
+            "Unreviewed hot-fixes often make incidents worse.",
+            "Never blame customers without evidence.",
+            "Good. Evidence plus a clear proposal speeds up a decision.",
+            "Good. Restore service first, then fix properly."
+          ]
+        },
+        {
+          "prompt": "Service is restored. Dana asks for an update for customer support.",
+          "options": [
+            "Reply 'fixed' and nothing else",
+            "Send a short message covering what happened, who was affected, the fix and what happens next",
+            "Wait until the post-mortem meeting",
+            "Explain that the engineer who deployed was careless"
+          ],
+          "scores": [
+            0.4,
+            1,
+            0.2,
+            0
+          ],
+          "explain": [
+            "Too little for support to act on.",
+            "Good. Those four points are what readers need.",
+            "Support needs information now.",
+            "Blame is unprofessional and unhelpful."
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "blocked-teammate",
+    "role": "software-engineer",
+    "type": "scenario",
+    "difficulty": 1,
+    "minutes": 6,
+    "title": "Helping, asking for help, and changing priorities",
+    "skills": {
+      "teamwork": 3,
+      "communication": 1
+    },
+    "from": {
+      "name": "Leo",
+      "title": "Tester"
+    },
+    "brief": "A normal workday has interruptions. Choose what a good teammate would do.",
+    "scenario": {
+      "steps": [
+        {
+          "prompt": "A teammate messages: 'My local setup is broken and I'm stuck.' You are mid-ticket with a deadline.",
+          "options": [
+            "Reply that you are mid-task and offer a specific time to help",
+            "Ignore it",
+            "Drop everything and spend an hour on it",
+            "Send a docs link and nothing else"
+          ],
+          "scores": [
+            1,
+            0,
+            0.5,
+            0.5
+          ],
+          "explain": [
+            "Good. Honest about your time and still helpful.",
+            "Leaving people stuck hurts the team.",
+            "Kind, but it may sink your own deadline without telling anyone.",
+            "Some help, but a short personal reply is better."
+          ]
+        },
+        {
+          "prompt": "You have been stuck on your own bug for 90 minutes.",
+          "options": [
+            "Keep struggling silently until you solve it",
+            "Ask 'it doesn't work, help' with no details",
+            "Copy a random fix from the internet",
+            "Write down what you tried, then ask for help with specifics"
+          ],
+          "scores": [
+            0.2,
+            0.4,
+            0.2,
+            1
+          ],
+          "explain": [
+            "Silence costs more time than it saves.",
+            "Without details, nobody can help quickly.",
+            "Unverified fixes can add new bugs.",
+            "Good. Specifics make it easy to help you."
+          ]
+        },
+        {
+          "prompt": "Your manager changes the priority mid-day.",
+          "options": [
+            "Complain that it is not fair",
+            "Quietly keep working on the old task",
+            "Confirm what to pause, update the ticket and tell anyone depending on you",
+            "Agree, but forget to tell the teammate who depends on your work"
+          ],
+          "scores": [
+            0.1,
+            0.1,
+            1,
+            0.3
+          ],
+          "explain": [
+            "Venting does not move the work forward.",
+            "That ignores the new priority.",
+            "Good. Confirming and communicating avoids surprises.",
+            "Dependencies need to hear about changes."
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "fizzbuzz",
+    "role": "software-engineer",
+    "type": "code",
+    "difficulty": 1,
+    "minutes": 8,
+    "title": "Implement fizzbuzz(n)",
+    "skills": {
+      "problem-solving": 3
+    },
+    "from": {
+      "name": "Sam",
+      "title": "Developer"
+    },
+    "brief": "Write `fizzbuzz(n)`. Return 'Fizz' if n is divisible by 3, 'Buzz' if by 5, 'FizzBuzz' if by both, otherwise the number as a string.",
+    "code": {
+      "fn": "fizzbuzz",
+      "starter": "function fizzbuzz(n) {\n  // your code here\n}",
+      "tests": [
+        {
+          "args": [
+            3
+          ],
+          "expect": "Fizz",
+          "public": true
+        },
+        {
+          "args": [
+            5
+          ],
+          "expect": "Buzz",
+          "public": true
+        },
+        {
+          "args": [
+            15
+          ],
+          "expect": "FizzBuzz"
+        },
+        {
+          "args": [
+            7
+          ],
+          "expect": "7"
+        },
+        {
+          "args": [
+            30
+          ],
+          "expect": "FizzBuzz"
+        },
+        {
+          "args": [
+            1
+          ],
+          "expect": "1"
+        }
+      ]
+    }
+  },
+  {
+    "id": "safe-average",
+    "role": "software-engineer",
+    "type": "code",
+    "difficulty": 1,
+    "minutes": 8,
+    "title": "A safe average()",
+    "skills": {
+      "problem-solving": 2,
+      "testing": 1
+    },
+    "from": {
+      "name": "Priya",
+      "title": "Senior Developer"
+    },
+    "brief": "The dashboard shows NaN when a team has no scores. Write `average(nums)` that returns the mean, and 0 for an empty array.",
+    "code": {
+      "fn": "average",
+      "starter": "function average(nums) {\n  // your code here\n}",
+      "tests": [
+        {
+          "args": [
+            [
+              2,
+              4,
+              6
+            ]
+          ],
+          "expect": 4,
+          "public": true
+        },
+        {
+          "args": [
+            []
+          ],
+          "expect": 0,
+          "public": true
+        },
+        {
+          "args": [
+            [
+              5
+            ]
+          ],
+          "expect": 5
+        },
+        {
+          "args": [
+            [
+              1,
+              2
+            ]
+          ],
+          "expect": 1.5
+        },
+        {
+          "args": [
+            [
+              -2,
+              2
+            ]
+          ],
+          "expect": 0
+        }
+      ]
+    }
+  },
+  {
+    "id": "slugify",
+    "role": "software-engineer",
+    "type": "code",
+    "difficulty": 2,
+    "minutes": 10,
+    "title": "slugify(title) for blog URLs",
+    "skills": {
+      "problem-solving": 3
+    },
+    "from": {
+      "name": "Mei",
+      "title": "Designer"
+    },
+    "brief": "We need clean URLs. Write `slugify(title)`: lowercase, trim, and replace any run of non-letters/digits with a single '-'. No leading or trailing dashes.",
+    "code": {
+      "fn": "slugify",
+      "starter": "function slugify(title) {\n  // your code here\n}",
+      "tests": [
+        {
+          "args": [
+            "Hello World!"
+          ],
+          "expect": "hello-world",
+          "public": true
+        },
+        {
+          "args": [
+            "  Cozy   Office "
+          ],
+          "expect": "cozy-office",
+          "public": true
+        },
+        {
+          "args": [
+            "Day 3: Incident"
+          ],
+          "expect": "day-3-incident"
+        },
+        {
+          "args": [
+            "---a---"
+          ],
+          "expect": "a"
+        },
+        {
+          "args": [
+            ""
+          ],
+          "expect": ""
+        }
+      ]
+    }
+  },
+  {
+    "id": "unique-array",
+    "role": "software-engineer",
+    "type": "code",
+    "difficulty": 2,
+    "minutes": 8,
+    "title": "Remove duplicates, keep the order",
+    "skills": {
+      "problem-solving": 3
+    },
+    "from": {
+      "name": "Omar",
+      "title": "Backend Developer"
+    },
+    "brief": "Write `unique(arr)` that removes duplicates but keeps the first occurrence order.",
+    "code": {
+      "fn": "unique",
+      "starter": "function unique(arr) {\n  // your code here\n}",
+      "tests": [
+        {
+          "args": [
+            [
+              1,
+              2,
+              2,
+              3,
+              1
+            ]
+          ],
+          "expect": [
+            1,
+            2,
+            3
+          ],
+          "public": true
+        },
+        {
+          "args": [
+            []
+          ],
+          "expect": [],
+          "public": true
+        },
+        {
+          "args": [
+            [
+              "a",
+              "a"
+            ]
+          ],
+          "expect": [
+            "a"
+          ]
+        },
+        {
+          "args": [
+            [
+              3,
+              2,
+              1,
+              2,
+              3
+            ]
+          ],
+          "expect": [
+            3,
+            2,
+            1
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "group-by-length",
+    "role": "software-engineer",
+    "type": "code",
+    "difficulty": 3,
+    "minutes": 12,
+    "title": "Group words by length",
+    "skills": {
+      "problem-solving": 3,
+      "testing": 1
+    },
+    "from": {
+      "name": "Priya",
+      "title": "Senior Developer"
+    },
+    "brief": "Write `groupByLength(words)` returning an object whose keys are word lengths and whose values are arrays of those words, in input order.",
+    "code": {
+      "fn": "groupByLength",
+      "starter": "function groupByLength(words) {\n  // your code here\n}",
+      "tests": [
+        {
+          "args": [
+            [
+              "a",
+              "bb",
+              "c"
+            ]
+          ],
+          "expect": {
+            "1": [
+              "a",
+              "c"
+            ],
+            "2": [
+              "bb"
+            ]
+          },
+          "public": true
+        },
+        {
+          "args": [
+            []
+          ],
+          "expect": {},
+          "public": true
+        },
+        {
+          "args": [
+            [
+              "hi",
+              "yo",
+              "hey"
+            ]
+          ],
+          "expect": {
+            "2": [
+              "hi",
+              "yo"
+            ],
+            "3": [
+              "hey"
+            ]
+          }
+        },
+        {
+          "args": [
+            [
+              "same",
+              "size",
+              "word"
+            ]
+          ],
+          "expect": {
+            "4": [
+              "same",
+              "size",
+              "word"
+            ]
+          }
+        }
+      ]
+    }
+  },
+  {
+    "id": "review-password-pr",
+    "role": "software-engineer",
+    "type": "written",
+    "difficulty": 2,
+    "minutes": 10,
+    "title": "Review a teammate's signup change",
+    "skills": {
+      "code-review": 3,
+      "security": 2,
+      "communication": 1
+    },
+    "from": {
+      "name": "Priya",
+      "title": "Senior Developer"
+    },
+    "brief": "Priya asked you to review this pull request. Write the comment you would post. Be specific about the problem, why it matters and what to do instead, and keep it kind.",
+    "written": {
+      "code": "app.post('/signup', (req, res) => {\n  db.users.insert({\n    email: req.body.email,\n    password: req.body.password,\n  });\n  res.send('ok');\n});",
+      "prompt": "Write your review comment.",
+      "minWords": 35,
+      "rubric": [
+        {
+          "id": "problem",
+          "label": "Names the actual problem (password stored in plain text)",
+          "weight": 3,
+          "keywords": [
+            [
+              "plain text",
+              "plaintext",
+              "clear text",
+              "cleartext",
+              "unhashed",
+              "not hashed",
+              "in the clear",
+              "stored as is",
+              "as-is",
+              "raw password"
+            ]
+          ]
+        },
+        {
+          "id": "risk",
+          "label": "Explains why it matters",
+          "weight": 2,
+          "keywords": [
+            [
+              "leak",
+              "breach",
+              "stolen",
+              "attacker",
+              "exposed",
+              "compromis",
+              "security risk",
+              "insecure",
+              "vulnerab",
+              "hacked"
+            ]
+          ]
+        },
+        {
+          "id": "fix",
+          "label": "Suggests a concrete fix (hashing with salt)",
+          "weight": 3,
+          "keywords": [
+            [
+              "hash",
+              "bcrypt",
+              "argon",
+              "scrypt",
+              "pbkdf2"
+            ],
+            [
+              "salt"
+            ]
+          ]
+        },
+        {
+          "id": "tone",
+          "label": "Kind, collaborative tone",
+          "weight": 1,
+          "keywords": [
+            [
+              "please",
+              "suggest",
+              "could",
+              "consider",
+              "thanks",
+              "thank you",
+              "would you",
+              "maybe",
+              "what do you think",
+              "nice",
+              "great"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "incident-update",
+    "role": "software-engineer",
+    "type": "written",
+    "difficulty": 2,
+    "minutes": 10,
+    "title": "Write the incident update",
+    "skills": {
+      "communication": 3,
+      "teamwork": 1
+    },
+    "from": {
+      "name": "Dana",
+      "title": "Engineering Manager"
+    },
+    "brief": "Login was broken for 40 minutes this morning because a deploy changed the login query. It was rolled back at 9:55. Customer support needs a short written update for customers.",
+    "written": {
+      "prompt": "Write the update.",
+      "minWords": 40,
+      "rubric": [
+        {
+          "id": "what",
+          "label": "Says what happened in plain language",
+          "weight": 2,
+          "keywords": [
+            [
+              "error",
+              "outage",
+              "incident",
+              "unable",
+              "could not",
+              "couldn't",
+              "failing",
+              "down",
+              "issue",
+              "problem"
+            ]
+          ]
+        },
+        {
+          "id": "impact",
+          "label": "States who was affected and for how long",
+          "weight": 2,
+          "keywords": [
+            [
+              "customer",
+              "user",
+              "affected",
+              "login",
+              "minutes",
+              "40",
+              "9:55",
+              "morning"
+            ]
+          ]
+        },
+        {
+          "id": "fix",
+          "label": "Says what was done to fix it",
+          "weight": 3,
+          "keywords": [
+            [
+              "rolled back",
+              "rollback",
+              "fixed",
+              "resolved",
+              "restored",
+              "patch",
+              "reverted",
+              "deployed"
+            ]
+          ]
+        },
+        {
+          "id": "next",
+          "label": "Says what happens next",
+          "weight": 2,
+          "keywords": [
+            [
+              "next",
+              "monitor",
+              "prevent",
+              "follow up",
+              "follow-up",
+              "review",
+              "going forward",
+              "postmortem",
+              "post-mortem",
+              "we will"
+            ]
+          ]
+        },
+        {
+          "id": "tone",
+          "label": "Apologises and keeps a calm, professional tone",
+          "weight": 1,
+          "keywords": [
+            [
+              "sorry",
+              "apolog",
+              "thank you",
+              "thanks for your patience",
+              "regret"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "clarify-vague-ticket",
+    "role": "software-engineer",
+    "type": "written",
+    "difficulty": 2,
+    "minutes": 10,
+    "title": "A vague ticket: \"Make the dashboard faster\"",
+    "skills": {
+      "requirements": 3,
+      "communication": 2
+    },
+    "from": {
+      "name": "Dana",
+      "title": "Engineering Manager"
+    },
+    "brief": "You receive a ticket that only says: \"Make the dashboard faster.\" Write your reply: the questions you would ask and how you would approach it.",
+    "written": {
+      "prompt": "Write your reply to the ticket.",
+      "minWords": 50,
+      "rubric": [
+        {
+          "id": "measure",
+          "label": "Asks what 'slow' means and how it is measured",
+          "weight": 3,
+          "keywords": [
+            [
+              "which page",
+              "which part",
+              "what is slow",
+              "how slow",
+              "seconds",
+              "metric",
+              "measure",
+              "baseline",
+              "load time",
+              "latency",
+              "how long"
+            ]
+          ]
+        },
+        {
+          "id": "who",
+          "label": "Asks about users, priority or deadline",
+          "weight": 2,
+          "keywords": [
+            [
+              "who",
+              "users",
+              "priority",
+              "deadline",
+              "how important",
+              "how many",
+              "business",
+              "when do you need"
+            ]
+          ]
+        },
+        {
+          "id": "plan",
+          "label": "Proposes a sensible first approach (measure before optimising)",
+          "weight": 3,
+          "keywords": [
+            [
+              "profile",
+              "measure first",
+              "investigate",
+              "reproduce",
+              "benchmark",
+              "first step",
+              "i would start",
+              "i'd start",
+              "then",
+              "plan"
+            ]
+          ]
+        },
+        {
+          "id": "assumptions",
+          "label": "States assumptions or what 'done' looks like",
+          "weight": 2,
+          "keywords": [
+            [
+              "assum",
+              "confirm",
+              "check with",
+              "agree",
+              "scope",
+              "done when",
+              "acceptance",
+              "success criteria",
+              "target"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "write-test-cases",
+    "role": "software-engineer",
+    "type": "written",
+    "difficulty": 2,
+    "minutes": 10,
+    "title": "Design test cases for a password checker",
+    "skills": {
+      "testing": 3,
+      "problem-solving": 1
+    },
+    "from": {
+      "name": "Leo",
+      "title": "Tester"
+    },
+    "brief": "You must test `isStrongPassword(pw)`: a password is strong if it is at least 8 characters and contains a letter and a number. List the test cases you would write and what each one checks.",
+    "written": {
+      "prompt": "List your test cases (input and expected result) with a short reason for each.",
+      "minWords": 40,
+      "rubric": [
+        {
+          "id": "happy",
+          "label": "Covers a normal valid password",
+          "weight": 1,
+          "keywords": [
+            [
+              "valid",
+              "strong password",
+              "happy path",
+              "normal",
+              "accepted",
+              "returns true",
+              "passes"
+            ]
+          ]
+        },
+        {
+          "id": "empty",
+          "label": "Covers empty or missing input",
+          "weight": 2,
+          "keywords": [
+            [
+              "empty",
+              "blank",
+              "\"\"",
+              "no password",
+              "null",
+              "undefined"
+            ]
+          ]
+        },
+        {
+          "id": "boundary",
+          "label": "Covers the length boundary (7 vs 8 characters)",
+          "weight": 3,
+          "keywords": [
+            [
+              "7 char",
+              "seven",
+              "8 char",
+              "eight",
+              "boundary",
+              "exactly 8",
+              "minimum",
+              "too short",
+              "one short"
+            ]
+          ]
+        },
+        {
+          "id": "classes",
+          "label": "Covers missing letter or missing number",
+          "weight": 2,
+          "keywords": [
+            [
+              "only letters",
+              "only numbers",
+              "only digits",
+              "no number",
+              "no digit",
+              "no letter",
+              "all numbers",
+              "all letters"
+            ]
+          ]
+        },
+        {
+          "id": "odd",
+          "label": "Considers odd input (spaces, emoji, very long, non-string)",
+          "weight": 2,
+          "keywords": [
+            [
+              "unicode",
+              "emoji",
+              "special character",
+              "symbol",
+              "space",
+              "whitespace",
+              "very long",
+              "long password",
+              "non-string",
+              "number input"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "estimate-feature",
+    "role": "software-engineer",
+    "type": "written",
+    "difficulty": 3,
+    "minutes": 12,
+    "title": "Estimate a feature honestly",
+    "skills": {
+      "requirements": 3,
+      "communication": 1
+    },
+    "from": {
+      "name": "Dana",
+      "title": "Engineering Manager"
+    },
+    "brief": "Product wants \"export my data as CSV\" on the account page. Write your estimate: how you would break it down, a time range, your assumptions and the risks.",
+    "written": {
+      "prompt": "Write your estimate.",
+      "minWords": 45,
+      "rubric": [
+        {
+          "id": "breakdown",
+          "label": "Breaks the work into smaller tasks",
+          "weight": 3,
+          "keywords": [
+            [
+              "break",
+              "tasks",
+              "subtasks",
+              "steps",
+              "endpoint",
+              "design",
+              "implement",
+              "build",
+              "ui",
+              "button"
+            ]
+          ]
+        },
+        {
+          "id": "range",
+          "label": "Gives a range with units, not a single guess",
+          "weight": 3,
+          "keywords": [
+            [
+              "day",
+              "days",
+              "hours",
+              "week",
+              "weeks",
+              "range",
+              "between",
+              " to ",
+              "-"
+            ]
+          ]
+        },
+        {
+          "id": "assumptions",
+          "label": "States assumptions and risks",
+          "weight": 3,
+          "keywords": [
+            [
+              "assum",
+              "risk",
+              "unknown",
+              "depends",
+              "dependency",
+              "uncertain",
+              "blocker",
+              "large",
+              "privacy",
+              "permission"
+            ]
+          ]
+        },
+        {
+          "id": "quality",
+          "label": "Includes testing, review or release work",
+          "weight": 1,
+          "keywords": [
+            [
+              "test",
+              "review",
+              "qa",
+              "deploy",
+              "release",
+              "monitor"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "status-update",
+    "role": "software-engineer",
+    "type": "written",
+    "difficulty": 1,
+    "minutes": 6,
+    "title": "End-of-day status update",
+    "skills": {
+      "communication": 3,
+      "teamwork": 1
+    },
+    "from": {
+      "name": "Dana",
+      "title": "Engineering Manager"
+    },
+    "brief": "Today you fixed a checkout bug (done), started on the CSV export (about half done) and are waiting for design to confirm the button wording. Write your end-of-day status update.",
+    "written": {
+      "prompt": "Write your status update.",
+      "minWords": 25,
+      "rubric": [
+        {
+          "id": "done",
+          "label": "Says what is finished",
+          "weight": 2,
+          "keywords": [
+            [
+              "done",
+              "completed",
+              "finished",
+              "shipped",
+              "fixed",
+              "resolved",
+              "merged"
+            ]
+          ]
+        },
+        {
+          "id": "blockers",
+          "label": "Mentions blockers or risks",
+          "weight": 3,
+          "keywords": [
+            [
+              "block",
+              "risk",
+              "waiting",
+              "depends",
+              "issue",
+              "concern",
+              "need from",
+              "pending"
+            ]
+          ]
+        },
+        {
+          "id": "next",
+          "label": "Says what comes next",
+          "weight": 2,
+          "keywords": [
+            [
+              "next",
+              "tomorrow",
+              "plan",
+              "will",
+              "following",
+              "continue"
+            ]
+          ]
+        },
+        {
+          "id": "clear",
+          "label": "Is specific (names the work)",
+          "weight": 1,
+          "keywords": [
+            [
+              "checkout",
+              "csv",
+              "export",
+              "button",
+              "design"
+            ]
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "pr-feedback-scenario",
+    "role": "software-engineer",
+    "type": "scenario",
+    "difficulty": 2,
+    "minutes": 8,
+    "title": "Giving and receiving review feedback",
+    "skills": {
+      "code-review": 3,
+      "teamwork": 1,
+      "communication": 1
+    },
+    "from": {
+      "name": "Priya",
+      "title": "Senior Developer"
+    },
+    "brief": "Code review is a conversation, not a verdict. Choose how you would handle three common moments.",
+    "scenario": {
+      "steps": [
+        {
+          "prompt": "A reviewer comments on your pull request: 'This function is too long and hard to follow.' You disagree a little. What do you do?",
+          "options": [
+            "Reply that it works and the reviewer is wrong",
+            "Thank them, ask which part is hardest to follow, and consider splitting it",
+            "Quietly rewrite everything without answering",
+            "Ignore the comment and merge"
+          ],
+          "scores": [
+            0.1,
+            1,
+            0.4,
+            0
+          ],
+          "explain": [
+            "Defensiveness shuts down feedback even when you are partly right.",
+            "Good. Curiosity keeps the conversation useful and you stay in control of the decision.",
+            "Changing without a reply leaves the reviewer guessing and you may fix the wrong thing.",
+            "Merging over an open comment breaks team trust."
+          ]
+        },
+        {
+          "prompt": "You are reviewing a teammate's 1,200-line pull request. How do you approach it?",
+          "options": [
+            "Ask them to split it into smaller pull requests if possible, and start with the riskiest parts",
+            "Approve it quickly so you do not block them",
+            "Reject it with 'too big'",
+            "Skim for style problems only"
+          ],
+          "scores": [
+            1,
+            0.1,
+            0.3,
+            0.2
+          ],
+          "explain": [
+            "Good. Smaller changes are easier to review well, and starting with risk finds the serious problems first.",
+            "Rubber-stamping lets bugs through.",
+            "A verdict without guidance is unhelpful.",
+            "Style matters less than correctness and security."
+          ]
+        },
+        {
+          "prompt": "You spot a real bug in a teammate's code. Which comment is best?",
+          "options": [
+            "'This is wrong.'",
+            "'Who wrote this?'",
+            "Fix it yourself silently in their branch",
+            "'On line 42 an empty list makes this divide by zero. Could we return 0 in that case? Here is a failing test.'"
+          ],
+          "scores": [
+            0.1,
+            0,
+            0.2,
+            1
+          ],
+          "explain": [
+            "No detail and no way forward.",
+            "Personal and unhelpful.",
+            "Silent edits surprise people and teach nothing.",
+            "Good: specific, kind, and it includes evidence and a suggestion."
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "id": "git-hygiene-scenario",
+    "role": "software-engineer",
+    "type": "scenario",
+    "difficulty": 2,
+    "minutes": 8,
+    "title": "Git habits that save the team",
+    "skills": {
+      "version-control": 3,
+      "security": 1
+    },
+    "from": {
+      "name": "Sam",
+      "title": "Developer"
+    },
+    "brief": "Good version control prevents lost work and leaked secrets. Choose what you would do.",
+    "scenario": {
+      "steps": [
+        {
+          "prompt": "You accidentally committed an API key to the repository and pushed it. What do you do first?",
+          "options": [
+            "Delete the file in a new commit and move on",
+            "Hope nobody noticed",
+            "Revoke and rotate the key immediately, then tell the team, then remove it from history",
+            "Make the repository private and say nothing"
+          ],
+          "scores": [
+            0.1,
+            0,
+            1,
+            0.2
+          ],
+          "explain": [
+            "The key is still in history and may already be copied.",
+            "Bots scan public repositories within minutes.",
+            "Good. A leaked secret must be treated as compromised, so rotating it comes first.",
+            "Hiding it does not fix an exposed key."
+          ]
+        },
+        {
+          "prompt": "Which commit message is best?",
+          "options": [
+            "'fix'",
+            "'Fix crash in checkout when the cart has no items'",
+            "'stuff'",
+            "'Updated files (final) v2'"
+          ],
+          "scores": [
+            0.1,
+            1,
+            0,
+            0
+          ],
+          "explain": [
+            "Says nothing about what or why.",
+            "Good. It says what changed and why it matters.",
+            "Says nothing.",
+            "Vague and misleading."
+          ]
+        },
+        {
+          "prompt": "You start a new feature. How should you organise the work?",
+          "options": [
+            "Create a short-lived branch, commit small logical changes, and open a pull request",
+            "Commit directly to main so it is always up to date",
+            "Work on your laptop for two weeks, then push everything at once",
+            "Copy the whole project folder as 'project-final'"
+          ],
+          "scores": [
+            1,
+            0.1,
+            0.2,
+            0
+          ],
+          "explain": [
+            "Good. Small commits on a branch make review and rollback easy.",
+            "Unreviewed changes to main can break everyone.",
+            "Large late merges cause painful conflicts.",
+            "Copies are not version control."
+          ]
+        }
+      ]
+    }
+  }
+]
