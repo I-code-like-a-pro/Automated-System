@@ -41,6 +41,7 @@ function createApp(opts = {}) {
   const demoEnabled = process.env.DEMO ? process.env.DEMO !== '0' : process.env.NODE_ENV !== 'production';
 
   /* ---------- helpers ---------- */
+  const jobs = new Map();   // AI task-writing jobs in progress (in memory only)
   const buckets = new Map();
   function limited(req, name, max, windowMs) {
     const key = name + ':' + (req.socket.remoteAddress || 'x'), now = Date.now();
@@ -149,15 +150,28 @@ function createApp(opts = {}) {
       const day = new Date().toISOString().slice(0, 10), gen = db.data.meta.gen && db.data.meta.gen.day === day ? db.data.meta.gen : (db.data.meta.gen = { day, n: 0 });
       const cap = Number(process.env.GEN_DAILY_LIMIT) || 300;
       if (gen.n >= cap) return send(res, 429, { error: 'The daily limit for AI-written tasks has been reached. Try again tomorrow, or practise the existing tasks.' });
+      // Writing a task can take a minute, so it runs as a background job: this call returns at once and the page polls for the result.
+      // (A single request held open for a minute is fragile over tunnels, proxies and mobile connections.)
+      const running = [...jobs.values()].find(j => j.owner === owner && j.status === 'working');
+      if (running) return send(res, 202, { job: running.id });                       // one at a time per person: reuse the one in progress
       gen.n++;
-      try {
-        const avoid = tasks.filter(t => t.skills[skill.id]).map(t => t.title).concat(db.generatedForOwner(owner).map(t => t.title));
-        const task = await (deps.generate || generator.generateTask)({ role, skill, type, difficulty: b.difficulty, avoid }, deps);
-        db.addGenerated(owner, task, MAX_GENERATED_PER_OWNER, MAX_GENERATED_TOTAL);
-        return send(res, 200, { task: publicTask(task) });
-      } catch (e) {
-        return send(res, 502, { error: 'The AI could not produce a good task this time. Please try again.' });
-      }
+      const job = { id: 'job_' + crypto.randomBytes(8).toString('hex'), owner, status: 'working', createdAt: Date.now() };
+      jobs.set(job.id, job);
+      for (const [id, j] of jobs) if (Date.now() - j.createdAt > 15 * 60e3) jobs.delete(id);   // forget old jobs
+      (async () => {
+        try {
+          const avoid = tasks.filter(t => t.skills[skill.id]).map(t => t.title).concat(db.generatedForOwner(owner).map(t => t.title));
+          const task = await (deps.generate || generator.generateTask)({ role, skill, type, difficulty: b.difficulty, avoid }, deps);
+          db.addGenerated(owner, task, MAX_GENERATED_PER_OWNER, MAX_GENERATED_TOTAL);
+          job.task = publicTask(task); job.status = 'done';
+        } catch (e) { job.status = 'error'; job.error = 'The AI could not produce a good task this time. Please try again.'; }
+      })();
+      return send(res, 202, { job: job.id });
+    }
+    if ((mm = /^\/api\/generate\/(job_[a-f0-9]{16})$/.exec(p)) && m === 'GET') {
+      const owner = ownerOf(req); if (!owner) return send(res, 401, { error: 'Missing or invalid owner key' });
+      const job = jobs.get(mm[1]); if (!job || job.owner !== owner) return send(res, 404, { error: 'Unknown job' });
+      return send(res, 200, job.status === 'done' ? { status: 'done', task: job.task } : job.status === 'error' ? { status: 'error', error: job.error } : { status: 'working', seconds: Math.round((Date.now() - job.createdAt) / 1000) });
     }
 
     /* Everything the server holds for this owner (lets a restored browser re-sync). */

@@ -91,6 +91,18 @@ async function start(deps) {
   return { app, call, stop: () => new Promise(r => { app.db.flushNow(); app.server.close(r); }) };
 }
 const newKey = () => crypto.randomBytes(24).toString('hex');
+/* generation is a background job: start it, then poll until it is done (mirrors what the page does) */
+async function gen(s, body, key) {
+  const start = await s.call('POST', '/api/generate', body, key);
+  if (start.status !== 202) return start;
+  for (let i = 0; i < 200; i++) {
+    const j = await s.call('GET', '/api/generate/' + start.json.job, null, key);
+    if (j.json.status === 'done') return { status: 200, json: { task: j.json.task } };
+    if (j.json.status === 'error') return { status: 502, json: { error: j.json.error } };
+    await new Promise(r => setTimeout(r, 10));
+  }
+  throw new Error('job never finished');
+}
 const modelSays = obj => async () => ({ ok: true, json: async () => ({ content: [{ text: JSON.stringify(obj) }] }) });
 
 test('API: without an AI key generation is off and says so', async t => {
@@ -99,7 +111,7 @@ test('API: without an AI key generation is off and says so', async t => {
   t.after(() => { if (saved.a) process.env.ANTHROPIC_API_KEY = saved.a; if (saved.g) process.env.GEMINI_API_KEY = saved.g; });
   const s = await start({}); t.after(s.stop);
   assert.equal((await s.call('GET', '/api/health')).json.ai, false);
-  const r = await s.call('POST', '/api/generate', { skillId: 'debugging' }, newKey());
+  const r = await gen(s, { skillId: 'debugging' }, newKey());
   assert.equal(r.status, 503); assert.match(r.json.error, /GEMINI_API_KEY or ANTHROPIC_API_KEY/);
 });
 
@@ -148,10 +160,10 @@ test('API: generate -> answer -> signed evidence, private to the person who aske
   const s = await start({ fetch: modelSays(mcq()) }); t.after(s.stop);
   const key = newKey(), other = newKey();
 
-  assert.equal((await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq' })).status, 401, 'needs an owner key');
-  assert.equal((await s.call('POST', '/api/generate', { skillId: 'no-such-skill' }, key)).status, 400);
+  assert.equal((await gen(s, { skillId: 'debugging', type: 'mcq' })).status, 401, 'needs an owner key');
+  assert.equal((await gen(s, { skillId: 'no-such-skill' }, key)).status, 400);
 
-  const g = await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq', difficulty: 2 }, key);
+  const g = await gen(s, { skillId: 'debugging', type: 'mcq', difficulty: 2 }, key);
   assert.equal(g.status, 200); const task = g.json.task;
   assert.ok(task.generated && task.id.startsWith('gen_'));
   assert.ok(!JSON.stringify(task).includes('"correct"') && !JSON.stringify(task).includes('explain'), 'answers never leave the server');
@@ -179,7 +191,7 @@ test('API: written AI tasks are graded by the AI, and never scored without it', 
   let aiUp = false;
   const aiGrade = async task => { if (!aiUp) throw new Error('AI HTTP 500'); return { rubric: task.written.rubric.map(r => ({ id: r.id, label: r.label, weight: r.weight, score: 1, comment: 'Good.' })), feedback: 'Well done.' }; };
   const s = await start({ fetch: modelSays(written()), aiGrade }); t.after(s.stop);
-  const key = newKey(), id = (await s.call('POST', '/api/generate', { skillId: 'communication', type: 'written' }, key)).json.task.id;
+  const key = newKey(), id = (await gen(s, { skillId: 'communication', type: 'written' }, key)).json.task.id;
   const text = 'I am sorry about the wrong total. We will fix your invoice today and email you a corrected copy within one working day.';
   const down = await s.call('POST', '/api/submit', { taskId: id, answer: { text } }, key);
   assert.equal(down.status, 503); assert.match(down.json.error, /not available/);
@@ -192,7 +204,7 @@ test('API: written AI tasks are graded by the AI, and never scored without it', 
 test('API: code tasks keep scoring by hidden tests; AI only adds a review', async t => {
   process.env.ANTHROPIC_API_KEY = 'test-key'; t.after(() => { delete process.env.ANTHROPIC_API_KEY; });
   const s = await start({ fetch: modelSays(code()), aiReview: async () => 'Nice use of filter.' }); t.after(s.stop);
-  const key = newKey(), id = (await s.call('POST', '/api/generate', { skillId: 'problem-solving', type: 'code' }, key)).json.task.id;
+  const key = newKey(), id = (await gen(s, { skillId: 'problem-solving', type: 'code' }, key)).json.task.id;
   const good = await s.call('POST', '/api/submit', { taskId: id, answer: { code: 'function sumEven(nums) { return nums.filter(n => n % 2 === 0).reduce((a, b) => a + b, 0); }' } }, key);
   assert.equal(good.json.score, 100); assert.match(good.json.feedback, /Nice use of filter/);
   const bad = await s.call('POST', '/api/submit', { taskId: id, answer: { code: 'function sumEven(nums) { return 0; }' } }, key);
@@ -204,15 +216,15 @@ test('API: daily limit protects the AI bill', async t => {
   t.after(() => { delete process.env.ANTHROPIC_API_KEY; delete process.env.GEN_DAILY_LIMIT; });
   const s = await start({ fetch: modelSays(mcq()) }); t.after(s.stop);
   const key = newKey();
-  assert.equal((await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq' }, key)).status, 200);
-  assert.equal((await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq' }, key)).status, 200);
-  assert.equal((await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq' }, key)).status, 429);
+  assert.equal((await gen(s, { skillId: 'debugging', type: 'mcq' }, key)).status, 200);
+  assert.equal((await gen(s, { skillId: 'debugging', type: 'mcq' }, key)).status, 200);
+  assert.equal((await gen(s, { skillId: 'debugging', type: 'mcq' }, key)).status, 429);
 });
 
 test('API: a model that keeps failing gives a friendly error, not a crash', async t => {
   process.env.ANTHROPIC_API_KEY = 'test-key'; t.after(() => { delete process.env.ANTHROPIC_API_KEY; });
   const s = await start({ fetch: modelSays({ title: 'x' }) }); t.after(s.stop);
-  const r = await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq' }, newKey());
+  const r = await gen(s, { skillId: 'debugging', type: 'mcq' }, newKey());
   assert.equal(r.status, 502); assert.match(r.json.error, /try again/i);
 });
 
@@ -233,4 +245,24 @@ test('.env loader: real variables win, quotes and comments handled', t => {
   assert.equal(envLoader.load(path.join(os.tmpdir(), 'nope', '.env')), 0);
   assert.equal(envLoader.load(f, { override: true }), 3, 'override lets the file win over an existing variable');
   assert.equal(process.env.SB_TEST_KEEP, 'fromfile');
+});
+
+test('API: generation runs as a background job that only its owner can poll', async t => {
+  process.env.ANTHROPIC_API_KEY = 'test-key'; t.after(() => { delete process.env.ANTHROPIC_API_KEY; });
+  let release; const gate = new Promise(r => { release = r; });
+  const s = await start({ generate: async opts => { await gate; return require('../lib/generate').parseAndBuild(JSON.stringify(mcq()), { role, skill, type: 'mcq', difficulty: 2 }); } }); t.after(s.stop);
+  const key = newKey(), other = newKey();
+  const a = await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq' }, key);
+  assert.equal(a.status, 202); assert.match(a.json.job, /^job_[a-f0-9]{16}$/, 'returns at once, before the AI has finished');
+  const again = await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq' }, key);
+  assert.equal(again.json.job, a.json.job, 'one job at a time per person: the second ask reuses it');
+  assert.equal((await s.call('GET', '/api/generate/' + a.json.job, null, key)).json.status, 'working');
+  assert.equal((await s.call('GET', '/api/generate/' + a.json.job, null, other)).status, 404, 'another person cannot read the job');
+  assert.equal((await s.call('GET', '/api/generate/' + a.json.job)).status, 401);
+  assert.equal((await s.call('GET', '/api/generate/job_0000000000000000', null, key)).status, 404);
+  release();
+  let done; for (let i = 0; i < 200 && !done; i++) { const j = await s.call('GET', '/api/generate/' + a.json.job, null, key); if (j.json.status === 'done') done = j.json; else await new Promise(r => setTimeout(r, 10)); }
+  assert.ok(done && done.task.generated && !JSON.stringify(done.task).includes('"correct"'));
+  const next = await s.call('POST', '/api/generate', { skillId: 'debugging', type: 'mcq' }, key);
+  assert.notEqual(next.json.job, a.json.job, 'a finished job does not block the next one');
 });

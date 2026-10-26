@@ -25,7 +25,7 @@ Graduates are asked for experience they cannot get without a job. What they do h
 1. **Evidence, not certificates.** Most certificates prove completion. SkillBridge issues *graded, signed* records: hidden tests for code, a rubric for writing, decision quality for scenarios.
 2. **Verifiable without trusting us in the moment.** Public-key signatures mean an employer's own browser can check a portfolio offline. Edit one character and verification fails (try it live).
 3. **Job-first, not course-first.** The job-match engine starts from a real ad and works backwards to what the student needs to prove. The ad never leaves the device.
-4. **Built for poor connectivity.** About 95 KB of app code (28 KB compressed), offline-first, answers queue and grade on reconnect, sample tests run locally, ETag revalidation keeps updates tiny.
+4. **Built for poor connectivity.** About 100 KB of app code (33 KB compressed), offline-first, answers queue and grade on reconnect, sample tests run locally, ETag revalidation keeps updates tiny.
 5. **Privacy by design.** Personal data lives in the student's own browser. The server keeps only signed evidence and opt-in portfolios, tied to a hashed random key. No emails, no accounts, no passwords.
 6. **Honest about its limits.** Every verification page says what it proves (graded and unaltered) and what it does not (who did the work). Readiness is guidance, not a hiring prediction.
 
@@ -52,7 +52,7 @@ Backup plan if the network misbehaves: run `npm run smoke` and show the passing 
 
 **Why would an employer trust it?** They do not have to trust a claim on a CV: they can verify a signature themselves, and read the rubric. Trust in the *tasks* grows with employer co-design, which is the first thing we would do in a pilot.
 
-**Where does AI fit?** Two jobs, both server-side and optional. (1) It writes fresh tasks for any skill, so practice never runs out. Every task is validated before a student sees it: answer positions are shuffled, and a code task is only offered if a reference solution passes all of its tests and the starter does not. (2) It marks written tasks against a rubric and reviews code. Evidence from AI-written tasks is labelled as such inside the signed record. **Does the AI decide anything?** Optional. Without an API key, written tasks use a transparent rubric checklist. With a key, AI scores against the same rubric. Code and scenario tasks never use AI. All scoring is shown to the student.
+**Where does AI fit?** Two jobs, both server-side and optional. (1) It writes fresh tasks for any skill, so practice never runs out. Every task is validated before a student sees it: answer positions are shuffled, and a code task is only offered if a reference solution passes all of its tests and the starter does not. (2) It marks written tasks against a rubric and reviews code. Evidence from AI-written tasks is labelled as such inside the signed record. **Does the AI decide anything?** Optional. Without an API key, written tasks use a transparent rubric checklist. With a key, AI scores against the same rubric. Code, debugging and scenario tasks are still scored by hidden tests or an answer key, never by AI opinion. All scoring is shown to the student.
 
 **What about privacy?** Coursework, drafts and job ads stay on the device. The server stores signed evidence tied to a hashed random key, and opt-in portfolios. Students can erase everything. Class dashboards need 5+ students and show only rounded aggregates.
 

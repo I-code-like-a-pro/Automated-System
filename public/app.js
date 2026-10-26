@@ -232,9 +232,20 @@ function generatorPanel(r) {
     if (!navigator.onLine) { status.replaceChildren(h('div', { class: 'notice warn' }, 'Writing a new task needs a connection.')); return; }
     btn.disabled = true; status.replaceChildren(h('p', { class: 'dim' }, 'Your colleague is writing a task... this can take up to a minute.'));
     try {
-      const res = await api('POST', '/api/generate', { skillId: skill.value, type: type.value || undefined, difficulty: Number(level.value) });
-      mergeGenerated([res.task]); location.href = '/#/task/' + res.task.id;
-    } catch (e) { status.replaceChildren(h('div', { class: 'notice bad' }, isNetworkError(e) ? 'Could not reach the server.' : e.message)); btn.disabled = false; }
+      // start a background job, then check on it every 2 seconds; a brief network hiccup while waiting does not lose the job
+      const started = await api('POST', '/api/generate', { skillId: skill.value, type: type.value || undefined, difficulty: Number(level.value) });
+      const t0 = Date.now(); let misses = 0;
+      for (;;) {
+        await new Promise(r => setTimeout(r, 2000));
+        let job;
+        try { job = await api('GET', '/api/generate/' + started.job); misses = 0; }
+        catch (e) { if (!isNetworkError(e) || ++misses > 8) throw e; status.replaceChildren(h('p', { class: 'dim' }, 'Connection is slow, still trying...')); continue; }
+        if (job.status === 'done') { mergeGenerated([job.task]); location.href = '/#/task/' + job.task.id; return; }
+        if (job.status === 'error') throw new Error(job.error);
+        if (Date.now() - t0 > 180000) throw new Error('This is taking too long. Please try again.');
+        status.replaceChildren(h('p', { class: 'dim' }, 'Your colleague is writing a task... ' + Math.round((Date.now() - t0) / 1000) + 's (usually under a minute).'));
+      }
+    } catch (e) { status.replaceChildren(h('div', { class: 'notice bad' }, isNetworkError(e) ? 'Could not reach the server. Check your connection and try again.' : e.message)); btn.disabled = false; }
   });
   return h('div', { class: 'card' }, h('h2', null, 'Fresh tasks written by AI'),
     h('p', { class: 'small dim' }, 'Pick a skill and get a brand-new task on it. An AI writes it and marks it; the answer key stays on the server, and code tasks are only offered after a reference solution passed every test. Evidence from these is labelled as AI-written.'),

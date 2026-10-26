@@ -1,6 +1,6 @@
 # Architecture
 
-SkillBridge is deliberately small: **zero npm dependencies**, about 95 KB of front end, and a single Node process. That is a feature: it runs on a cheap server, a laptop, or a school lab machine, and anyone can read all of it.
+SkillBridge is deliberately small: **zero npm dependencies**, about 100 KB of front end, and a single Node process. That is a feature: it runs on a cheap server, a laptop, or a school lab machine, and anyone can read all of it.
 
 ```mermaid
 flowchart LR
@@ -64,7 +64,7 @@ A person is linked to their server records by a random key generated in their br
 
 ## Low-bandwidth design
 
-~95 KB of app code (about 28 KB gzipped), no frameworks or CDNs, ETag revalidation (a 304 costs a few hundred bytes), service worker caching, local sample tests for instant feedback, offline queue that grades on reconnect.
+~100 KB of app code (about 33 KB gzipped), no frameworks or CDNs, ETag revalidation (a 304 costs a few hundred bytes), service worker caching, local sample tests for instant feedback, offline queue that grades on reconnect.
 
 ## Testing
 
